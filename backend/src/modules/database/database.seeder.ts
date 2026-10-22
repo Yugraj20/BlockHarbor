@@ -27,13 +27,16 @@ export class DatabaseSeeder implements OnModuleInit {
     const existingUsers = this.users.findAll();
 
     if (existingUsers.length > 0) {
+      // Migrate legacy username if found
+      const legacyUser = existingUsers.find((u) => u.username === "kubek");
+      if (legacyUser) {
+        this.users.update({ ...legacyUser, username: "admin" });
+        console.log("    ℹ️ Migrated default admin username to 'admin'");
+      }
       return;
     }
 
-    const defaultPassword =
-      process.env.NODE_ENV === "development"
-        ? "BlockHarbor2026"
-        : generateRandomString(16);
+    const defaultPassword = process.env.BLOCKHARBOR_ADMIN_PASSWORD || "admin";
     const hashedPassword = await hashPassword(defaultPassword);
 
     const defaultUser = {
