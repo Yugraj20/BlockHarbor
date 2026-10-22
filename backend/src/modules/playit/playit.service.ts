@@ -14,6 +14,7 @@ import type {
   IPlayitAgentStatus,
   IPlayitDiagnosticCheck,
   IPlayitDiagnosticReport,
+  IPlayitRemoteTunnel,
   IPlayitTunnel,
   PlayitAgentState,
 } from "@shared/types/playit.types";
@@ -26,7 +27,11 @@ import { promises as fsp } from "fs";
 import ky from "ky";
 import * as net from "net";
 import * as path from "path";
-import { CreatePlayitTunnelDto, UpdatePlayitTunnelDto } from "./dto/playit.dto";
+import {
+  CreateAutoPlayitTunnelDto,
+  CreatePlayitTunnelDto,
+  UpdatePlayitTunnelDto,
+} from "./dto/playit.dto";
 
 const OFFICIAL_AGENT_URL_WIN =
   "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-windows-x86_64.exe";
@@ -98,9 +103,10 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
     const secret = this.loadConfiguredSecret();
     if (secret) {
       this.isAuthenticated = true;
-      if (this.agentPath) {
-        this.agentState = "stopped";
-      }
+      // Auto-start agent so it is immediately online and ready on Playit network
+      this.startAgent().catch((err) => {
+        this.logger.warn(`Could not auto-start Playit agent: ${getErrorMessage(err)}`);
+      });
     } else {
       this.isAuthenticated = false;
       this.initiateClaimFlow().catch((err) => {
@@ -397,11 +403,7 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
     this.agentState = "starting";
     this.lastError = null;
 
-    const primaryToml = this.getTomlPaths()[0];
     const args: string[] = ["--secret", secret];
-    if (primaryToml) {
-      args.push("--secret-path", primaryToml);
-    }
 
     try {
       this.agentProcess = spawn(agentBinary, args, {
@@ -493,6 +495,8 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
       // Authenticated / Running indicators
       if (
         line.toLowerCase().includes("tunnel connection established") ||
+        line.toLowerCase().includes("playit connected") ||
+        line.toLowerCase().includes("tunnels loaded") ||
         line.toLowerCase().includes("authenticated") ||
         line.toLowerCase().includes("client loaded") ||
         line.toLowerCase().includes("running") ||
@@ -815,5 +819,233 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
     const ok = this.tunnelsRepo.delete(id);
     if (!ok) throw new NotFoundException("Tunnel not found");
     return true;
+  }
+
+  /**
+   * Fetches all remote tunnels registered on the user's Playit.gg account
+   */
+  async getRemoteTunnels(): Promise<IPlayitRemoteTunnel[]> {
+    const secret = this.loadConfiguredSecret();
+    if (!secret) {
+      throw new BadRequestException(
+        "Playit agent is not authenticated. Please claim or enter secret key first.",
+      );
+    }
+
+    try {
+      const resp = await fetch("https://api.playit.gg/v1/tunnels/list", {
+        method: "POST",
+        headers: {
+          Authorization: `agent-key ${secret}`,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      });
+      const json = (await resp.json()) as any;
+      if (json.status !== "success" || !Array.isArray(json.data?.tunnels)) {
+        return [];
+      }
+
+      const results: IPlayitRemoteTunnel[] = [];
+      for (const t of json.data.tunnels) {
+        const alloc = t.public_allocations?.[0]?.details || {};
+        const autoDomain = alloc.auto_domain || "";
+        const ipHostname = alloc.ip_hostname || "";
+        const ip = alloc.ip || "";
+        const port = alloc.port || 0;
+        const publicAddress = autoDomain || ipHostname || ip;
+
+        results.push({
+          id: t.id,
+          name: t.name || "Playit Tunnel",
+          tunnelType: t.tunnel_type || "minecraft-java",
+          portType: t.port_type || "tcp",
+          publicAddress,
+          publicPort: port,
+          ip,
+          autoDomain,
+        });
+      }
+      return results;
+    } catch (err) {
+      this.logger.error(`Failed to fetch remote tunnels: ${getErrorMessage(err)}`);
+      throw new BadRequestException(`Failed to fetch remote tunnels: ${getErrorMessage(err)}`);
+    }
+  }
+
+  /**
+   * Automatically creates a new tunnel via Playit.gg API, fetches assigned public domain & port,
+   * and registers it directly to the local server
+   */
+  async createTunnelViaApi(dto: CreateAutoPlayitTunnelDto): Promise<IPlayitTunnel> {
+    const secret = this.loadConfiguredSecret();
+    if (!secret) {
+      throw new BadRequestException(
+        "Playit agent is not authenticated. Please link your Playit.gg account first.",
+      );
+    }
+
+    const server = this.serversRepo.findById(dto.serverId);
+    if (!server) {
+      throw new NotFoundException("Target server does not exist");
+    }
+
+    // 1. Fetch agent_id from /v1/agents/rundata
+    let agentId: string | null = null;
+    try {
+      const runDataResp = await fetch("https://api.playit.gg/v1/agents/rundata", {
+        method: "POST",
+        headers: {
+          Authorization: `agent-key ${secret}`,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      });
+      const runDataJson = (await runDataResp.json()) as any;
+      if (runDataJson.status === "success" && runDataJson.data?.agent_id) {
+        agentId = runDataJson.data.agent_id;
+      }
+    } catch (e) {
+      this.logger.warn(`Could not fetch agent_id from rundata: ${getErrorMessage(e)}`);
+    }
+
+    if (!agentId) {
+      throw new BadRequestException(
+        "Could not determine Playit agent ID. Ensure your Playit account is linked and the agent is running.",
+      );
+    }
+
+    // 2. Call /v1/tunnels/create
+    const tunnelType = dto.tunnelType || "minecraft-java";
+    const name = dto.name || `${server.name} Tunnel`;
+    const protocol = dto.protocol || (tunnelType === "voice-chat" ? "udp" : "tcp");
+    const localPort = dto.localPort || (tunnelType === "voice-chat" ? 24454 : 25565);
+    const localIp = dto.localIp || "127.0.0.1";
+
+    const payload = {
+      name,
+      protocol: {
+        type: "tunnel-type",
+        details: tunnelType,
+      },
+      origin: {
+        type: "agent",
+        data: {
+          agent_id: agentId,
+        },
+      },
+      endpoint: {
+        type: "region",
+        details: {
+          region: "global",
+        },
+      },
+      enabled: true,
+    };
+
+    let newTunnelId: string | null = null;
+    try {
+      const createResp = await fetch("https://api.playit.gg/v1/tunnels/create", {
+        method: "POST",
+        headers: {
+          Authorization: `agent-key ${secret}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      const createJson = (await createResp.json()) as any;
+      if (createJson.status !== "success" || !createJson.data?.id) {
+        throw new Error(createJson.data?.message || JSON.stringify(createJson.data));
+      }
+      newTunnelId = createJson.data.id;
+      this.logger.log(`Created tunnel ${newTunnelId} on Playit.gg API for server ${server.name}`);
+    } catch (createErr) {
+      this.logger.error(`Failed to create tunnel on Playit.gg API: ${getErrorMessage(createErr)}`);
+      throw new BadRequestException(`Failed to create tunnel on Playit.gg: ${getErrorMessage(createErr)}`);
+    }
+
+    // 3. Query /v1/tunnels/list to get the public address and port assigned
+    let publicAddress: string | null = null;
+    let publicPort: number | null = null;
+
+    for (let i = 0; i < 4; i++) {
+      await new Promise((r) => setTimeout(r, 800));
+      try {
+        const listResp = await fetch("https://api.playit.gg/v1/tunnels/list", {
+          method: "POST",
+          headers: {
+            Authorization: `agent-key ${secret}`,
+            "Content-Type": "application/json",
+          },
+          body: "{}",
+        });
+        const listJson = (await listResp.json()) as any;
+        if (listJson.status === "success" && Array.isArray(listJson.data?.tunnels)) {
+          const match = listJson.data.tunnels.find((t: any) => t.id === newTunnelId);
+          if (match) {
+            const alloc = match.public_allocations?.[0]?.details || {};
+            publicAddress = alloc.auto_domain || alloc.ip_hostname || alloc.ip || null;
+            publicPort = alloc.port || null;
+            if (publicAddress) break;
+          }
+        }
+      } catch {}
+    }
+
+    // Auto-start agent if stopped so tunnel connects immediately
+    if (!this.agentProcess || this.agentProcess.killed) {
+      this.startAgent().catch((e) =>
+        this.logger.warn(`Could not start agent after tunnel creation: ${getErrorMessage(e)}`),
+      );
+    }
+
+    // 4. Save into BlockHarbor database
+    return this.tunnelsRepo.create({
+      serverId: dto.serverId,
+      name,
+      protocol,
+      localIp,
+      localPort,
+      publicAddress,
+      publicPort,
+      tunnelType,
+      status: "active",
+      lastHealthCheck: Date.now(),
+      healthDetails: "Provisioned automatically via Playit.gg Cloud API",
+    });
+  }
+
+  /**
+   * Syncs tunnels from the user's remote Playit.gg account into BlockHarbor database
+   */
+  async syncAccountTunnels(serverId?: string): Promise<IPlayitTunnel[]> {
+    const remote = await this.getRemoteTunnels();
+    const existing = this.tunnelsRepo.findAll();
+    const synced: IPlayitTunnel[] = [];
+
+    for (const r of remote) {
+      const match = existing.find(
+        (e) => e.publicAddress === r.publicAddress && e.publicPort === r.publicPort,
+      );
+
+      if (!match && serverId) {
+        const created = this.tunnelsRepo.create({
+          serverId,
+          name: r.name,
+          protocol: (r.portType === "udp" ? "udp" : "tcp") as any,
+          localIp: "127.0.0.1",
+          localPort: r.tunnelType === "voice-chat" ? 24454 : 25565,
+          publicAddress: r.publicAddress,
+          publicPort: r.publicPort,
+          tunnelType: (r.tunnelType as any) || "minecraft-java",
+          status: "active",
+          lastHealthCheck: Date.now(),
+          healthDetails: "Imported from Playit.gg account",
+        });
+        synced.push(created);
+      }
+    }
+
+    return serverId ? this.tunnelsRepo.findByServerId(serverId) : this.tunnelsRepo.findAll();
   }
 }

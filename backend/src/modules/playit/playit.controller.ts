@@ -24,6 +24,7 @@ import {
 } from "@nestjs/swagger";
 import { UserPermissions } from "@shared/types/user.types";
 import {
+  CreateAutoPlayitTunnelDto,
   CreatePlayitTunnelDto,
   SetPlayitSecretDto,
   TestLocalPortDto,
@@ -84,6 +85,28 @@ export class PlayitController {
   @RequirePermissions(UserPermissions.SERVERS_CONTROL)
   setSecret(@Body() dto: SetPlayitSecretDto) {
     return this.playitService.setSecret(dto.secret);
+  }
+
+  @Get("agent/remote-tunnels")
+  @ApiOperation({ summary: "Fetch remote tunnels registered on user Playit account" })
+  getRemoteTunnels() {
+    return this.playitService.getRemoteTunnels();
+  }
+
+  @Post("agent/tunnels/create-auto")
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: "Provision new tunnel automatically on Playit.gg API" })
+  @RequirePermissions(UserPermissions.SERVERS_CONFIGURE)
+  createTunnelAuto(@Body() dto: CreateAutoPlayitTunnelDto) {
+    return this.playitService.createTunnelViaApi(dto);
+  }
+
+  @Post("agent/tunnels/sync")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Sync remote Playit account tunnels to server" })
+  @RequirePermissions(UserPermissions.SERVERS_CONFIGURE)
+  syncTunnels(@Query("serverId") serverId?: string) {
+    return this.playitService.syncAccountTunnels(serverId);
   }
 
   @Get("tunnels")

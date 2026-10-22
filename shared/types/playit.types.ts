@@ -33,6 +33,17 @@ export interface IPlayitTunnel {
   updatedAt: number;
 }
 
+export interface IPlayitRemoteTunnel {
+  id: string;
+  name: string;
+  tunnelType: string;
+  portType: string;
+  publicAddress: string;
+  publicPort: number;
+  ip: string;
+  autoDomain: string;
+}
+
 export interface IPlayitAgentStatus {
   installed: boolean;
   running: boolean;

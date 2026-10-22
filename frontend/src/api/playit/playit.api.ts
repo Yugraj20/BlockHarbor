@@ -2,6 +2,7 @@ import { authHttp, type AuthHttpClient } from "@/shared/lib/http";
 import type {
   IPlayitAgentStatus,
   IPlayitDiagnosticReport,
+  IPlayitRemoteTunnel,
   IPlayitTunnel,
 } from "@shared/types/playit.types";
 
@@ -27,6 +28,26 @@ export class PlayitApi {
     this.http.post<IPlayitAgentStatus>("playit/agent/secret", {
       json: { secret },
     });
+
+  getRemoteTunnels = (): Promise<IPlayitRemoteTunnel[]> =>
+    this.http.get<IPlayitRemoteTunnel[]>("playit/agent/remote-tunnels");
+
+  createAutoTunnel = (data: {
+    serverId: string;
+    name?: string;
+    tunnelType?: string;
+    protocol?: string;
+    localPort?: number;
+    localIp?: string;
+  }): Promise<IPlayitTunnel> =>
+    this.http.post<IPlayitTunnel>("playit/agent/tunnels/create-auto", {
+      json: data,
+    });
+
+  syncAccountTunnels = (serverId?: string): Promise<IPlayitTunnel[]> =>
+    this.http.post<IPlayitTunnel[]>(
+      serverId ? `playit/agent/tunnels/sync?serverId=${serverId}` : "playit/agent/tunnels/sync",
+    );
 
   getTunnels = (serverId?: string): Promise<IPlayitTunnel[]> =>
     this.http.get<IPlayitTunnel[]>(

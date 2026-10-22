@@ -34,9 +34,17 @@ import {
   ShieldAlert,
   Key,
   Check,
+  Zap,
+  Sparkles,
 } from "lucide-react";
 import api from "@/api";
-import type { IPlayitAgentStatus, IPlayitTunnel, PlayitProtocol, PlayitTunnelType } from "@shared/types/playit.types";
+import type {
+  IPlayitAgentStatus,
+  IPlayitRemoteTunnel,
+  IPlayitTunnel,
+  PlayitProtocol,
+  PlayitTunnelType,
+} from "@shared/types/playit.types";
 import type { Server as IServer } from "@/api/servers/servers.model";
 
 interface PlayitWizardModalProps {
@@ -87,6 +95,13 @@ export function PlayitWizardModal({
   const [isConnectingSecret, setIsConnectingSecret] = useState(false);
   const [wizardSecretError, setWizardSecretError] = useState<string | null>(null);
 
+  // Auto-creation & remote tunnel discovery states
+  const [remoteTunnels, setRemoteTunnels] = useState<IPlayitRemoteTunnel[]>([]);
+  const [isLoadingRemote, setIsLoadingRemote] = useState(false);
+  const [isAutoCreating, setIsAutoCreating] = useState(false);
+  const [autoCreateSuccess, setAutoCreateSuccess] = useState<string | null>(null);
+  const [showManualAddress, setShowManualAddress] = useState(false);
+
   const handleConnectSecret = async () => {
     if (!wizardSecret.trim()) return;
     setIsConnectingSecret(true);
@@ -99,6 +114,60 @@ export function PlayitWizardModal({
       setWizardSecretError(e.message || "Failed to connect secret key");
     } finally {
       setIsConnectingSecret(false);
+    }
+  };
+
+  const loadRemoteTunnels = async () => {
+    setIsLoadingRemote(true);
+    try {
+      const list = await api.playit.getRemoteTunnels();
+      setRemoteTunnels(list);
+      if (!publicAddress && list.length > 0) {
+        const match = list.find((t) => t.tunnelType === tunnelType) || list[0];
+        setPublicAddress(match.publicAddress);
+        if (match.publicPort) setPublicPort(match.publicPort);
+      }
+    } catch (e) {
+      console.warn("Could not load remote tunnels:", e);
+    } finally {
+      setIsLoadingRemote(false);
+    }
+  };
+
+  const handleAutoCreateTunnel = async () => {
+    if (!selectedServerId) return;
+    setIsAutoCreating(true);
+    setAutoCreateSuccess(null);
+    try {
+      const created = await api.playit.createAutoTunnel({
+        serverId: selectedServerId,
+        name: tunnelName,
+        tunnelType,
+        protocol,
+        localPort,
+        localIp: "127.0.0.1",
+      });
+
+      if (created.publicAddress) {
+        setPublicAddress(created.publicAddress);
+      }
+      if (created.publicPort) {
+        setPublicPort(created.publicPort);
+      }
+      setAutoCreateSuccess(
+        `Tunnel created! Public address: ${created.publicAddress}${
+          created.publicPort ? `:${created.publicPort}` : ""
+        }`,
+      );
+      onTunnelCreated();
+      // Smoothly advance to step 8
+      setTimeout(() => {
+        setStep(8);
+      }, 1000);
+    } catch (e: any) {
+      alert(`Auto-creation failed: ${e.message || "Unknown error"}`);
+    } finally {
+      setIsAutoCreating(false);
     }
   };
 
@@ -115,6 +184,13 @@ export function PlayitWizardModal({
       }
     }
   }, [selectedServer]);
+
+  // Load account tunnels from Playit.gg when reaching step 7
+  useEffect(() => {
+    if (step === 7 && agentStatus?.authenticated) {
+      loadRemoteTunnels();
+    }
+  }, [step, agentStatus?.authenticated]);
 
   // Handle agent download
   const handleDownloadAgent = async () => {
@@ -621,44 +697,151 @@ export function PlayitWizardModal({
           </div>
         )}
 
-        {/* STEP 7: Public Endpoint Assignment */}
+        {/* STEP 7: Public Endpoint Assignment & Auto-Creation */}
         {step === 7 && (
           <div className="space-y-4 py-3">
-            <h3 className="font-semibold text-zinc-200">Step 7: Playit Public Address</h3>
-            <p className="text-sm text-zinc-400">
-              Enter the public hostname assigned by your Playit.gg dashboard (e.g. from{" "}
-              <a
-                href="https://playit.gg/manage"
-                target="_blank"
-                rel="noreferrer"
-                className="text-emerald-400 hover:underline"
+            <div>
+              <h3 className="font-semibold text-zinc-200">Step 7: Public Server Address & Tunnel</h3>
+              <p className="text-sm text-zinc-400">
+                Provision a public join address automatically from Playit.gg — no manual copy/paste required.
+              </p>
+            </div>
+
+            {/* 1. Primary Action: Auto-Create via Playit Cloud */}
+            <div className="p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/20 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="text-sm font-semibold text-emerald-300 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-emerald-400" />
+                    Automatic Cloud Provisioning (Recommended)
+                  </div>
+                  <p className="text-xs text-zinc-300">
+                    BlockHarbor will request an encrypted public domain & port from Playit.gg and bind it directly to your Minecraft server.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleAutoCreateTunnel}
+                disabled={isAutoCreating || !agentStatus?.authenticated}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs py-2.5 gap-2 shadow-lg shadow-emerald-950/50"
               >
-                playit.gg/manage
-              </a>
-              ) or your agent logs.
-            </p>
+                {isAutoCreating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Provisioning Tunnel on Playit.gg...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Create Public Tunnel Automatically
+                  </>
+                )}
+              </Button>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5 col-span-2">
-                <Label>Public Hostname / Address</Label>
-                <Input
-                  placeholder="e.g. my-cool-server.auto.playit.gg or xxxx.joinmc.link"
-                  value={publicAddress}
-                  onChange={(e) => setPublicAddress(e.target.value)}
-                  className="bg-zinc-900 border-zinc-800 font-mono text-sm"
-                />
-              </div>
+              {autoCreateSuccess && (
+                <div className="p-2.5 rounded-lg bg-emerald-900/40 border border-emerald-500/50 text-xs text-emerald-200 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{autoCreateSuccess}</span>
+                </div>
+              )}
+            </div>
 
-              <div className="space-y-1.5">
-                <Label>Public Port (if assigned)</Label>
-                <Input
-                  type="number"
-                  placeholder="e.g. 25565 or 48192"
-                  value={publicPort}
-                  onChange={(e) => setPublicPort(e.target.value === "" ? "" : Number(e.target.value))}
-                  className="bg-zinc-900 border-zinc-800 font-mono text-sm"
-                />
+            {/* 2. Existing Remote Tunnels Found on Account */}
+            {remoteTunnels.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                    Or Select Existing Tunnel from Playit Account ({remoteTunnels.length})
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={loadRemoteTunnels}
+                    disabled={isLoadingRemote}
+                    className="text-zinc-400 hover:text-zinc-200 text-[11px] h-6 px-2 gap-1"
+                  >
+                    {isLoadingRemote ? <Loader2 className="w-3 h-3 animate-spin" /> : "Refresh"}
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1">
+                  {remoteTunnels.map((t) => {
+                    const isSelected = publicAddress === t.publicAddress;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => {
+                          setPublicAddress(t.publicAddress);
+                          if (t.publicPort) setPublicPort(t.publicPort);
+                        }}
+                        className={`p-2.5 rounded-lg border text-left flex items-center justify-between transition-colors ${
+                          isSelected
+                            ? "border-emerald-500 bg-emerald-950/30 text-emerald-200"
+                            : "border-zinc-800 bg-zinc-900/60 hover:border-zinc-700 text-zinc-300"
+                        }`}
+                      >
+                        <div className="space-y-0.5 truncate">
+                          <div className="font-medium text-xs truncate flex items-center gap-1.5">
+                            <span className="font-mono text-emerald-400">{t.publicAddress}</span>
+                            {t.publicPort ? (
+                              <Badge variant="outline" className="text-[10px] py-0 border-zinc-700 font-mono">
+                                Port: {t.publicPort}
+                              </Badge>
+                            ) : null}
+                          </div>
+                          <div className="text-[11px] text-zinc-400 truncate">
+                            {t.name} • {t.tunnelType} ({t.portType.toUpperCase()})
+                          </div>
+                        </div>
+                        {isSelected ? (
+                          <Badge className="bg-emerald-600 text-white text-[10px] shrink-0">Selected</Badge>
+                        ) : (
+                          <span className="text-[11px] text-emerald-400 hover:underline shrink-0">Use This →</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+            )}
+
+            {/* 3. Manual Override Option */}
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setShowManualAddress(!showManualAddress)}
+                className="text-xs text-zinc-400 hover:text-zinc-200 underline decoration-zinc-600 underline-offset-2 flex items-center gap-1"
+              >
+                {showManualAddress ? "Hide manual hostname entry" : "Need to manually enter custom hostname or port?"}
+              </button>
+
+              {showManualAddress && (
+                <div className="mt-3 p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 grid grid-cols-2 gap-3">
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">Public Hostname / Address</Label>
+                    <Input
+                      placeholder="e.g. my-cool-server.auto.playit.gg or xxxx.joinmc.link"
+                      value={publicAddress}
+                      onChange={(e) => setPublicAddress(e.target.value)}
+                      className="bg-zinc-900 border-zinc-800 font-mono text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs">Public Port (if assigned)</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 25565 or 48192"
+                      value={publicPort}
+                      onChange={(e) => setPublicPort(e.target.value === "" ? "" : Number(e.target.value))}
+                      className="bg-zinc-900 border-zinc-800 font-mono text-xs"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

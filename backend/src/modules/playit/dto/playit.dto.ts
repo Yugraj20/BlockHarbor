@@ -132,3 +132,38 @@ export class SetPlayitSecretDto {
   @IsNotEmpty()
   secret: string;
 }
+
+export class CreateAutoPlayitTunnelDto {
+  @ApiProperty({ description: "Target server ID" })
+  @IsString()
+  @IsNotEmpty()
+  serverId: string;
+
+  @ApiPropertyOptional({ description: "Friendly name for the tunnel", default: "Minecraft Java Tunnel" })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiPropertyOptional({
+    enum: ["minecraft-java", "minecraft-bedrock", "voice-chat", "custom"],
+    default: "minecraft-java",
+  })
+  @IsOptional()
+  tunnelType?: PlayitTunnelType;
+
+  @ApiPropertyOptional({ enum: ["tcp", "udp"], default: "tcp" })
+  @IsOptional()
+  protocol?: PlayitProtocol;
+
+  @ApiPropertyOptional({ default: 25565 })
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  @IsOptional()
+  localPort?: number;
+
+  @ApiPropertyOptional({ default: "127.0.0.1" })
+  @IsString()
+  @IsOptional()
+  localIp?: string;
+}

@@ -46,6 +46,7 @@ export function PlayitPage() {
   const [secretInput, setSecretInput] = useState("");
   const [isConnectingSecret, setIsConnectingSecret] = useState(false);
   const [isRefreshingClaim, setIsRefreshingClaim] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [showSecretField, setShowSecretField] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -111,6 +112,25 @@ export function PlayitPage() {
       setFeedbackMsg({ type: "error", text: e.message || "Failed to set secret key" });
     } finally {
       setIsConnectingSecret(false);
+    }
+  };
+
+  const handleSyncTunnels = async () => {
+    setIsSyncing(true);
+    try {
+      const synced = await api.playit.syncAccountTunnels();
+      setTunnels(synced);
+      setFeedbackMsg({
+        type: "success",
+        text: `Successfully synced ${synced.length} tunnel(s) from your Playit.gg account!`,
+      });
+    } catch (e: any) {
+      setFeedbackMsg({
+        type: "error",
+        text: e.message || "Failed to sync tunnels from Playit.gg account",
+      });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -213,6 +233,19 @@ export function PlayitPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          {agentStatus?.authenticated && (
+            <Button
+              variant="outline"
+              onClick={handleSyncTunnels}
+              disabled={isSyncing}
+              className="border-zinc-800 hover:border-zinc-700 text-zinc-200 gap-1.5"
+              title="Sync tunnels registered on your Playit.gg web dashboard"
+            >
+              {isSyncing ? <Loader2 className="w-4 h-4 animate-spin text-emerald-400" /> : <RefreshCw className="w-4 h-4 text-emerald-400" />}
+              Sync Account Tunnels
+            </Button>
+          )}
+
           <Button
             variant="outline"
             onClick={() => setDiagnosticsOpen(true)}
@@ -256,8 +289,20 @@ export function PlayitPage() {
                       : "border-amber-500/40 text-amber-400 bg-amber-950/20"
                   }
                 >
-                  {agentStatus?.authenticated ? "Connected & Authenticated" : "Account Claim Required"}
+                  {agentStatus?.authenticated ? "Connected" : "Account Claim Required"}
                 </Badge>
+                {agentStatus?.authenticated && (
+                  <Badge
+                    variant="outline"
+                    className={
+                      agentStatus?.running
+                        ? "border-emerald-500/40 text-emerald-300 bg-emerald-950/40"
+                        : "border-amber-500/40 text-amber-300 bg-amber-950/40"
+                    }
+                  >
+                    {agentStatus?.running ? "Online (Running)" : "Offline (Stopped)"}
+                  </Badge>
+                )}
               </div>
               <p className="text-xs text-zinc-400 mt-0.5">
                 {agentStatus?.authenticated
@@ -268,6 +313,17 @@ export function PlayitPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {agentStatus?.authenticated && !agentStatus?.running && (
+              <Button
+                size="sm"
+                onClick={handleStartAgent}
+                disabled={isAgentLoading}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs gap-1.5 shadow-sm"
+              >
+                {isAgentLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                Start Agent
+              </Button>
+            )}
             {agentStatus?.claimUrl && (
               <Button
                 variant="outline"
