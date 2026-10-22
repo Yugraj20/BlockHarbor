@@ -19,6 +19,7 @@ import type {
 } from "@shared/types/playit.types";
 import { ServerStatus } from "@shared/types/server/server.types";
 import { ChildProcess, spawn } from "child_process";
+import * as crypto from "crypto";
 import * as dns from "dns";
 import * as fs from "fs";
 import { promises as fsp } from "fs";
@@ -38,7 +39,10 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
   private agentProcess: ChildProcess | null = null;
   private agentPid: number | null = null;
   private agentPath: string | null = null;
+  private claimCode: string | null = null;
   private claimUrl: string | null = null;
+  private claimPollTimer: NodeJS.Timeout | null = null;
+  private configuredSecret: string | null = null;
   private isAuthenticated = false;
   private agentState: PlayitAgentState = "not_installed";
   private lastError: string | null = null;
@@ -50,14 +54,66 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
     private readonly serversRepo: ServersRepository,
   ) {}
 
+  private getTomlPaths(): string[] {
+    const paths: string[] = [];
+    if (process.platform === "win32" && process.env.LOCALAPPDATA) {
+      paths.push(path.join(process.env.LOCALAPPDATA, "playit_gg", "playit.toml"));
+    }
+    paths.push(path.resolve("./data/playit.toml"));
+    paths.push(path.resolve("./binaries/playit/playit.toml"));
+    return paths;
+  }
+
+  loadConfiguredSecret(): string | null {
+    if (this.configuredSecret) return this.configuredSecret;
+    for (const p of this.getTomlPaths()) {
+      if (fs.existsSync(p)) {
+        try {
+          const content = fs.readFileSync(p, "utf-8");
+          const match = content.match(/secret\s*=\s*["']([^"']+)["']/i);
+          if (match && match[1]) {
+            this.configuredSecret = match[1].trim();
+            return this.configuredSecret;
+          }
+        } catch {}
+      }
+    }
+    return null;
+  }
+
+  async saveSecret(secret: string): Promise<void> {
+    this.configuredSecret = secret.trim();
+    for (const p of this.getTomlPaths()) {
+      try {
+        await fsp.mkdir(path.dirname(p), { recursive: true });
+        await fsp.writeFile(p, `secret = "${this.configuredSecret}"\n`, "utf-8");
+      } catch (e) {
+        this.logger.warn(`Could not write secret to ${p}: ${getErrorMessage(e)}`);
+      }
+    }
+  }
+
   async onModuleInit() {
     this.discoverAgentPath();
-    if (this.agentPath) {
-      this.agentState = "stopped";
+    const secret = this.loadConfiguredSecret();
+    if (secret) {
+      this.isAuthenticated = true;
+      if (this.agentPath) {
+        this.agentState = "stopped";
+      }
+    } else {
+      this.isAuthenticated = false;
+      this.initiateClaimFlow().catch((err) => {
+        this.logger.warn(`Failed to auto-initiate Playit claim: ${getErrorMessage(err)}`);
+      });
     }
   }
 
   async onModuleDestroy() {
+    if (this.claimPollTimer) {
+      clearInterval(this.claimPollTimer);
+      this.claimPollTimer = null;
+    }
     await this.stopAgent();
   }
 
@@ -74,6 +130,10 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
     ];
 
     if (isWindows) {
+      const execDir = path.dirname(process.execPath);
+      candidatePaths.push(path.join(execDir, "binaries", "playit", exeName));
+      candidatePaths.push(path.join(execDir, "binaries", "playit", "playit-windows-x86_64.exe"));
+
       const localAppData = process.env.LOCALAPPDATA;
       if (localAppData) {
         candidatePaths.push(path.join(localAppData, "Programs", "playit", exeName));
@@ -82,6 +142,7 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
       const progFiles = process.env.ProgramFiles;
       if (progFiles) {
         candidatePaths.push(path.join(progFiles, "playit", exeName));
+        candidatePaths.push(path.join(progFiles, "BlockHarbor", "binaries", "playit", exeName));
       }
     } else {
       candidatePaths.push("/usr/local/bin/playit", "/usr/bin/playit");
@@ -101,21 +162,174 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Initiates the official Playit claim flow and starts background polling
+   */
+  async initiateClaimFlow(forceNew = false): Promise<{ claimUrl: string; code: string }> {
+    if (!forceNew && this.claimUrl && this.claimCode) {
+      return { claimUrl: this.claimUrl, code: this.claimCode };
+    }
+
+    if (this.claimPollTimer) {
+      clearInterval(this.claimPollTimer);
+      this.claimPollTimer = null;
+    }
+
+    const code = "bh-" + crypto.randomBytes(3).toString("hex");
+    this.claimCode = code;
+    this.claimUrl = `https://playit.gg/claim/${code}`;
+    this.agentState = "needs_claim";
+    this.logger.log(`Initiating Playit claim handshake with code ${code}: ${this.claimUrl}`);
+
+    try {
+      const resp = await fetch("https://api.playit.gg/claim/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          agent_type: "self-managed",
+          version: "0.15.26",
+        }),
+      });
+      const data = (await resp.json()) as any;
+      this.logger.log(`Playit claim setup response: ${JSON.stringify(data)}`);
+    } catch (err) {
+      this.logger.warn(`Playit claim/setup request failed: ${getErrorMessage(err)}`);
+    }
+
+    this.startClaimPolling(code);
+    return { claimUrl: this.claimUrl, code: this.claimCode };
+  }
+
+  private startClaimPolling(code: string) {
+    if (this.claimPollTimer) {
+      clearInterval(this.claimPollTimer);
+    }
+
+    let attempts = 0;
+    const maxAttempts = 300; // 15 minutes of polling
+
+    this.claimPollTimer = setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        if (this.claimPollTimer) {
+          clearInterval(this.claimPollTimer);
+          this.claimPollTimer = null;
+        }
+        return;
+      }
+
+      try {
+        const resp = await fetch("https://api.playit.gg/claim/setup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code,
+            agent_type: "self-managed",
+            version: "0.15.26",
+          }),
+        });
+        const json = (await resp.json()) as any;
+        if (json?.data === "UserAccepted") {
+          this.logger.log(`Playit claim accepted by user for code ${code}! Exchanging for secret key...`);
+          if (this.claimPollTimer) {
+            clearInterval(this.claimPollTimer);
+            this.claimPollTimer = null;
+          }
+
+          await this.exchangeClaimCode(code);
+        }
+      } catch (err) {
+        // Silently retry
+      }
+    }, 3000);
+  }
+
+  private async exchangeClaimCode(code: string) {
+    try {
+      const resp = await fetch("https://api.playit.gg/claim/exchange", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const json = (await resp.json()) as any;
+      this.logger.log(`Playit claim/exchange response: ${JSON.stringify(json)}`);
+
+      let secretKey: string | null = null;
+      if (json?.status === "success" && json?.data) {
+        if (typeof json.data === "string") {
+          secretKey = json.data;
+        } else if (json.data.secret_key) {
+          secretKey = json.data.secret_key;
+        } else if (json.data.secret) {
+          secretKey = json.data.secret;
+        }
+      }
+
+      if (secretKey) {
+        await this.saveSecret(secretKey);
+        this.isAuthenticated = true;
+        this.claimUrl = null;
+        this.claimCode = null;
+        this.logger.log(`Playit agent secret received & saved! Auto-starting agent...`);
+        await this.startAgent();
+      } else {
+        this.logger.error(`Could not parse secret key from exchange response: ${JSON.stringify(json)}`);
+      }
+    } catch (err) {
+      this.logger.error(`Failed to exchange claim code ${code}: ${getErrorMessage(err)}`);
+    }
+  }
+
+  async setSecret(secret: string): Promise<IPlayitAgentStatus> {
+    if (!secret || typeof secret !== "string" || !secret.trim()) {
+      throw new BadRequestException("Secret key cannot be empty");
+    }
+
+    await this.saveSecret(secret.trim());
+    this.isAuthenticated = true;
+    this.claimUrl = null;
+    this.claimCode = null;
+
+    if (this.claimPollTimer) {
+      clearInterval(this.claimPollTimer);
+      this.claimPollTimer = null;
+    }
+
+    if (this.agentProcess && !this.agentProcess.killed) {
+      await this.stopAgent();
+    }
+
+    return this.startAgent();
+  }
+
+  /**
    * Retrieves live status of the Playit agent
    */
   getAgentStatus(): IPlayitAgentStatus {
     const installed = !!this.discoverAgentPath();
     const running = this.agentProcess !== null && !this.agentProcess.killed;
+    const hasSecret = !!this.loadConfiguredSecret();
+
+    let state: PlayitAgentState = this.agentState;
+    if (running) {
+      state = "running";
+    } else if (!installed) {
+      state = "not_installed";
+    } else if (!hasSecret) {
+      state = "needs_claim";
+    }
 
     return {
       installed,
       running,
-      authenticated: this.isAuthenticated,
-      version: "0.15.x",
+      authenticated: this.isAuthenticated || hasSecret,
+      hasSecret,
+      claimCode: this.claimCode,
+      version: "1.0.10",
       path: this.agentPath,
       pid: running ? this.agentPid : null,
       claimUrl: this.claimUrl,
-      status: this.agentState,
+      status: state,
       lastError: this.lastError,
       lastOutput: [...this.logBuffer],
     };
@@ -173,12 +387,24 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
       );
     }
 
+    const secret = this.loadConfiguredSecret();
+    if (!secret) {
+      await this.initiateClaimFlow();
+      this.agentState = "needs_claim";
+      return this.getAgentStatus();
+    }
+
     this.agentState = "starting";
     this.lastError = null;
-    this.claimUrl = null;
+
+    const primaryToml = this.getTomlPaths()[0];
+    const args: string[] = ["--secret", secret];
+    if (primaryToml) {
+      args.push("--secret-path", primaryToml);
+    }
 
     try {
-      this.agentProcess = spawn(agentBinary, [], {
+      this.agentProcess = spawn(agentBinary, args, {
         cwd: path.dirname(agentBinary),
         stdio: ["ignore", "pipe", "pipe"],
         windowsHide: true,

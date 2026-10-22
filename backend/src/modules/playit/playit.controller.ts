@@ -25,6 +25,7 @@ import {
 import { UserPermissions } from "@shared/types/user.types";
 import {
   CreatePlayitTunnelDto,
+  SetPlayitSecretDto,
   TestLocalPortDto,
   TestRemoteEndpointDto,
   UpdatePlayitTunnelDto,
@@ -67,6 +68,22 @@ export class PlayitController {
   @RequirePermissions(UserPermissions.KUBEK_SETTINGS)
   downloadAgent() {
     return this.playitService.downloadAgent();
+  }
+
+  @Post("agent/claim/refresh")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Regenerate or refresh Playit claim link" })
+  @RequirePermissions(UserPermissions.SERVERS_CONTROL)
+  refreshClaim() {
+    return this.playitService.initiateClaimFlow(true);
+  }
+
+  @Post("agent/secret")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Configure Playit agent secret key directly" })
+  @RequirePermissions(UserPermissions.SERVERS_CONTROL)
+  setSecret(@Body() dto: SetPlayitSecretDto) {
+    return this.playitService.setSecret(dto.secret);
   }
 
   @Get("tunnels")

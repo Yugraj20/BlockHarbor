@@ -125,3 +125,10 @@ export class TestRemoteEndpointDto {
   @Max(65535)
   port: number;
 }
+
+export class SetPlayitSecretDto {
+  @ApiProperty({ description: "Playit.gg agent secret key" })
+  @IsString()
+  @IsNotEmpty()
+  secret: string;
+}

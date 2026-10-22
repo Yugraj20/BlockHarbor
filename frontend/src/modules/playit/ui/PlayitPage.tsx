@@ -21,6 +21,8 @@ import {
   Trash2,
   Loader2,
   Server as ServerIcon,
+  Key,
+  Check,
 } from "lucide-react";
 import api from "@/api";
 import type { IPlayitAgentStatus, IPlayitTunnel } from "@shared/types/playit.types";
@@ -39,6 +41,13 @@ export function PlayitPage() {
   // Modals
   const [wizardOpen, setWizardOpen] = useState(false);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+
+  // Secret & Claim states
+  const [secretInput, setSecretInput] = useState("");
+  const [isConnectingSecret, setIsConnectingSecret] = useState(false);
+  const [isRefreshingClaim, setIsRefreshingClaim] = useState(false);
+  const [showSecretField, setShowSecretField] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Test states per tunnel
   const [testingTunnelId, setTestingTunnelId] = useState<string | null>(null);
@@ -63,15 +72,47 @@ export function PlayitPage() {
 
   useEffect(() => {
     loadData();
-    // Poll agent status every 10 seconds to detect claim completion or tunnel changes
+    // Poll agent status every 3 seconds while needs_claim or stopping, else 8 seconds
     const interval = setInterval(async () => {
       try {
         const s = await api.playit.getStatus();
         setAgentStatus(s);
       } catch {}
-    }, 10000);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleRefreshClaim = async () => {
+    setIsRefreshingClaim(true);
+    setFeedbackMsg(null);
+    try {
+      await api.playit.refreshClaim();
+      const s = await api.playit.getStatus();
+      setAgentStatus(s);
+      setFeedbackMsg({ type: "success", text: "Fresh claim code generated. Open the link to link your account." });
+    } catch (e: any) {
+      setFeedbackMsg({ type: "error", text: e.message || "Failed to refresh claim link" });
+    } finally {
+      setIsRefreshingClaim(false);
+    }
+  };
+
+  const handleConnectSecret = async () => {
+    if (!secretInput.trim()) return;
+    setIsConnectingSecret(true);
+    setFeedbackMsg(null);
+    try {
+      const s = await api.playit.setSecret(secretInput.trim());
+      setAgentStatus(s);
+      setSecretInput("");
+      setShowSecretField(false);
+      setFeedbackMsg({ type: "success", text: "Playit Secret Key saved & agent connected successfully!" });
+    } catch (e: any) {
+      setFeedbackMsg({ type: "error", text: e.message || "Failed to set secret key" });
+    } finally {
+      setIsConnectingSecret(false);
+    }
+  };
 
   const handleStartAgent = async () => {
     setIsAgentLoading(true);
@@ -191,32 +232,154 @@ export function PlayitPage() {
         </div>
       </div>
 
-      {/* Claim Banner (if agent needs claim) */}
-      {agentStatus?.claimUrl && (
-        <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Account Connection & Claiming Card */}
+      <Card className="p-5 bg-zinc-900/80 border-zinc-800 shadow-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-800/80">
           <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+              agentStatus?.authenticated
+                ? "bg-emerald-950/60 border border-emerald-500/40 text-emerald-400"
+                : "bg-amber-950/60 border border-amber-500/40 text-amber-400"
+            }`}>
+              {agentStatus?.authenticated ? <CheckCircle2 className="w-5 h-5" /> : <Radio className="w-5 h-5 animate-pulse" />}
+            </div>
             <div>
-              <div className="font-semibold text-sm text-amber-200">
-                Playit Agent Requires Account Claiming
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-zinc-100 text-base">
+                  Playit.gg Account Connection
+                </h3>
+                <Badge
+                  variant="outline"
+                  className={
+                    agentStatus?.authenticated
+                      ? "border-emerald-500/40 text-emerald-400 bg-emerald-950/20"
+                      : "border-amber-500/40 text-amber-400 bg-amber-950/20"
+                  }
+                >
+                  {agentStatus?.authenticated ? "Connected & Authenticated" : "Account Claim Required"}
+                </Badge>
               </div>
-              <div className="text-xs text-zinc-400">
-                Click to authenticate this agent with your Playit.gg account to enable public tunnels.
-              </div>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                {agentStatus?.authenticated
+                  ? "Your agent is linked and authorized on the Playit.gg network."
+                  : "Claim this agent or paste your secret key to link with your Playit.gg account."}
+              </p>
             </div>
           </div>
 
-          <a
-            href={agentStatus.claimUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-xs transition-colors shrink-0"
-          >
-            Claim Agent on Playit.gg
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            {agentStatus?.claimUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshClaim}
+                disabled={isRefreshingClaim}
+                className="border-zinc-800 hover:border-zinc-700 text-zinc-300 text-xs gap-1.5"
+                title="Generate fresh claim code"
+              >
+                {isRefreshingClaim ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                Refresh Code
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSecretField(!showSecretField)}
+              className="border-zinc-800 hover:border-zinc-700 text-zinc-300 text-xs gap-1.5"
+            >
+              <Key className="w-3.5 h-3.5 text-emerald-400" />
+              {showSecretField ? "Hide Secret Key" : agentStatus?.authenticated ? "Change Secret Key" : "Enter Secret Key"}
+            </Button>
+          </div>
         </div>
-      )}
+
+        {feedbackMsg && (
+          <div className={`mt-3 p-3 rounded-lg text-xs flex items-center gap-2 ${
+            feedbackMsg.type === "success"
+              ? "bg-emerald-950/30 border border-emerald-500/30 text-emerald-300"
+              : "bg-red-950/30 border border-red-500/30 text-red-300"
+          }`}>
+            {feedbackMsg.type === "success" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+            {feedbackMsg.text}
+          </div>
+        )}
+
+        {/* Claim Link Section (shown when unauthenticated or claimUrl available) */}
+        {!agentStatus?.authenticated && agentStatus?.claimUrl && (
+          <div className="mt-4 p-4 rounded-xl bg-amber-950/20 border border-amber-500/30 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider">
+                  Option 1: One-Click Browser Claim Link
+                </span>
+                <p className="text-xs text-zinc-300 mt-0.5">
+                  Click the button below to open Playit.gg in your browser and authorize this agent:
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <CopyButton text={agentStatus.claimUrl} label="Copy Link" className="text-xs bg-zinc-900 border-zinc-700" />
+                <a
+                  href={agentStatus.claimUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md transition-colors"
+                >
+                  Open Claim Link on Playit.gg
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1 text-xs text-zinc-400">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+              <span>Waiting for confirmation on Playit.gg — BlockHarbor will automatically connect when you click <b>Add Agent</b>.</span>
+            </div>
+          </div>
+        )}
+
+        {/* Secret Key Input Section (shown when toggled OR when unauthenticated and no claimUrl) */}
+        {(showSecretField || (!agentStatus?.authenticated && !agentStatus?.claimUrl)) && (
+          <div className="mt-4 p-4 rounded-xl bg-zinc-950/60 border border-zinc-800 space-y-3">
+            <div>
+              <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Key className="w-3.5 h-3.5 text-emerald-400" />
+                {agentStatus?.authenticated ? "Update Secret Key" : "Option 2: Direct Playit Secret Key"}
+              </span>
+              <p className="text-xs text-zinc-400 mt-1">
+                Paste your agent secret key from{" "}
+                <a
+                  href="https://playit.gg/manage/agents"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-emerald-400 hover:underline inline-flex items-center gap-0.5"
+                >
+                  playit.gg/manage/agents <ExternalLink className="w-3 h-3" />
+                </a>{" "}
+                to connect immediately without browser claiming.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2.5">
+              <input
+                type="password"
+                placeholder="Paste Playit Secret Key here..."
+                value={secretInput}
+                onChange={(e) => setSecretInput(e.target.value)}
+                className="w-full h-9 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-100 placeholder:text-zinc-500 font-mono focus:outline-none focus:border-emerald-500"
+              />
+              <Button
+                size="sm"
+                onClick={handleConnectSecret}
+                disabled={isConnectingSecret || !secretInput.trim()}
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-xs gap-1.5 shrink-0"
+              >
+                {isConnectingSecret ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                Connect Account
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
 
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

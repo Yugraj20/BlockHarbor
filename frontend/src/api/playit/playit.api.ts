@@ -20,6 +20,14 @@ export class PlayitApi {
   downloadAgent = (): Promise<{ success: boolean; path: string }> =>
     this.http.post<{ success: boolean; path: string }>("playit/agent/download");
 
+  refreshClaim = (): Promise<{ claimUrl: string; code: string }> =>
+    this.http.post<{ claimUrl: string; code: string }>("playit/agent/claim/refresh");
+
+  setSecret = (secret: string): Promise<IPlayitAgentStatus> =>
+    this.http.post<IPlayitAgentStatus>("playit/agent/secret", {
+      json: { secret },
+    });
+
   getTunnels = (serverId?: string): Promise<IPlayitTunnel[]> =>
     this.http.get<IPlayitTunnel[]>(
       serverId ? `playit/tunnels?serverId=${serverId}` : "playit/tunnels",

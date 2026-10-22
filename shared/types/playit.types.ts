@@ -37,6 +37,8 @@ export interface IPlayitAgentStatus {
   installed: boolean;
   running: boolean;
   authenticated: boolean;
+  hasSecret?: boolean;
+  claimCode?: string | null;
   version: string | null;
   path: string | null;
   pid: number | null;
