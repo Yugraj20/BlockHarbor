@@ -29,9 +29,12 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 test-bun.zip
 *.tmp
 db.sql
-servers/
-backups/
-binaries/
+/servers/
+/backups/
+/binaries/
+/backend/servers/
+/backend/backups/
+/backend/binaries/
 
 # IntelliJ based IDEs
 .idea
