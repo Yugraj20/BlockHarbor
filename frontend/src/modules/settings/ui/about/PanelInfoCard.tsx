@@ -41,7 +41,7 @@ export function PanelInfoCard() {
 
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-2xl font-bold tracking-tight">Kubek</h2>
+            <h2 className="text-2xl font-bold tracking-tight">BlockHarbor</h2>
             {current ? (
               <Badge variant="secondary" className="font-mono">
                 {formatVersion(current)}

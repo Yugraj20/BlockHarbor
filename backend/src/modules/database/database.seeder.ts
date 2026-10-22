@@ -32,13 +32,13 @@ export class DatabaseSeeder implements OnModuleInit {
 
     const defaultPassword =
       process.env.NODE_ENV === "development"
-        ? "Kubek2026"
+        ? "BlockHarbor2026"
         : generateRandomString(16);
     const hashedPassword = await hashPassword(defaultPassword);
 
     const defaultUser = {
       id: randomUUID(),
-      username: "kubek",
+      username: "admin",
       password: hashedPassword,
       secret: "",
       permissions: Object.values(UserPermissions) as UserPermissions[],
@@ -51,7 +51,7 @@ export class DatabaseSeeder implements OnModuleInit {
 
     this.users.create(defaultUser);
     console.log("    😎 Default admin user created:");
-    console.log("       Username: kubek");
+    console.log("       Username: admin");
     console.log("       Password: " + defaultPassword);
     console.warn("      ", chalk.black.bgYellowBright("WARN! Save password!"));
   }

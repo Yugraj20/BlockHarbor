@@ -13,9 +13,9 @@
     <Authors>BlockHarbor Team &amp; Seeroy</Authors>
     <Product>BlockHarbor - Native Minecraft Server Management</Product>
     <Version>4.0.2</Version>
-    <Copyright>Copyright (C) 2026 BlockHarbor Team &amp; Kubek Contributors</Copyright>
+    <Copyright>Copyright (C) 2026 BlockHarbor Team</Copyright>
     <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>false</SelfContained>
+    <SelfContained>true</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="app.ico" />
     <None Update="app.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

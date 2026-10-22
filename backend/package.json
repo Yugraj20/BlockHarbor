@@ -1,7 +1,7 @@
 {
-  "name": "backend",
+  "name": "blockharbor-backend",
   "version": "4.0.2",
-  "author": "seeeroy",
+  "author": "BlockHarbor Team",
   "private": true,
   "scripts": {
     "build": "nest build",

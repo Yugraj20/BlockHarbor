@@ -22,6 +22,19 @@ namespace BlockHarbor.Desktop
             _supervisor = supervisor;
             InitializeComponent();
 
+            try
+            {
+                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
+                if (File.Exists(iconPath))
+                {
+                    Icon = System.Windows.Media.Imaging.BitmapFrame.Create(new Uri(iconPath, UriKind.Absolute));
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to set window icon: {ex.Message}");
+            }
+
             InitializeSystemTray();
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;

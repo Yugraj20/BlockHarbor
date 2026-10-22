@@ -8,7 +8,7 @@ namespace BlockHarbor.Desktop
 {
     public partial class App : System.Windows.Application
     {
-        private const string AppMutexName = "Global\\BlockHarbor_SingleInstance_Mutex";
+        private const string AppMutexName = "Local\\BlockHarbor_SingleInstance_Mutex";
         private Mutex? _appMutex;
         private ProcessSupervisor? _supervisor;
 
@@ -25,20 +25,34 @@ namespace BlockHarbor.Desktop
             base.OnStartup(e);
 
             // Single instance enforcement
-            _appMutex = new Mutex(true, AppMutexName, out bool isNewInstance);
+            bool isNewInstance = true;
+            try
+            {
+                _appMutex = new Mutex(true, AppMutexName, out isNewInstance);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Mutex warning: {ex.Message}");
+                isNewInstance = true;
+            }
+
             if (!isNewInstance)
             {
                 // Bring existing instance to foreground
-                var current = Process.GetCurrentProcess();
-                foreach (var process in Process.GetProcessesByName(current.ProcessName))
+                try
                 {
-                    if (process.Id != current.Id && process.MainWindowHandle != IntPtr.Zero)
+                    var current = Process.GetCurrentProcess();
+                    foreach (var process in Process.GetProcessesByName(current.ProcessName))
                     {
-                        ShowWindow(process.MainWindowHandle, SW_RESTORE);
-                        SetForegroundWindow(process.MainWindowHandle);
-                        break;
+                        if (process.Id != current.Id && process.MainWindowHandle != IntPtr.Zero)
+                        {
+                            ShowWindow(process.MainWindowHandle, SW_RESTORE);
+                            SetForegroundWindow(process.MainWindowHandle);
+                            break;
+                        }
                     }
                 }
+                catch { }
 
                 Shutdown();
                 return;

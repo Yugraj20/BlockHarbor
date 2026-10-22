@@ -6,8 +6,7 @@
         Height="860" Width="1380"
         MinHeight="650" MinWidth="950"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BgDarkBrush}"
-        Icon="app.ico">
+        Background="{StaticResource BgDarkBrush}">
 
     <Grid Background="{StaticResource BgDarkBrush}">
         <!-- Main Web Application Host -->

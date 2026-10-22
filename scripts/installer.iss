@@ -4,7 +4,7 @@
 #define MyAppName "BlockHarbor"
 #define MyAppVersion "4.0.2"
 #define MyAppPublisher "BlockHarbor Team"
-#define MyAppURL "https://github.com/seeroy/kubek-minecraft-dashboard"
+#define MyAppURL "https://github.com/Yugraj20/BlockHarbor"
 #define MyAppExeName "BlockHarbor.exe"
 #define MyAppBackendName "BlockHarbor-Backend.exe"
 #define SourceDir "..\dist\desktop"

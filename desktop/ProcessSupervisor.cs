@@ -62,10 +62,12 @@ namespace BlockHarbor.Desktop
                 throw new FileNotFoundException("Could not locate BlockHarbor backend executable or runtime script.");
             }
 
+            var workDir = GetWritableWorkingDirectory(exePath);
+
             var startInfo = new ProcessStartInfo
             {
                 FileName = exePath,
-                WorkingDirectory = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory,
+                WorkingDirectory = workDir,
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
@@ -78,7 +80,7 @@ namespace BlockHarbor.Desktop
 
             try
             {
-                File.WriteAllText(_logPath, $"[BlockHarbor Host] Starting backend process: {exePath} on port {_port}\n");
+                File.WriteAllText(_logPath, $"[BlockHarbor Host] Starting backend process: {exePath} on port {_port} in {workDir}\n");
 
                 _backendProcess = new Process { StartInfo = startInfo };
 
@@ -109,10 +111,10 @@ namespace BlockHarbor.Desktop
             var candidates = new[]
             {
                 Path.Combine(baseDir, "BlockHarbor-Backend.exe"),
+                Path.Combine(baseDir, "BlockHarbor-4.0.2-win-x64.exe"),
+                Path.Combine(baseDir, "..", "dist", "BlockHarbor-Backend.exe"),
+                Path.Combine(baseDir, "..", "dist", "BlockHarbor-4.0.2-win-x64.exe"),
                 Path.Combine(baseDir, "main.exe"),
-                Path.Combine(baseDir, "..", "dist", "Kubek-4.0.2-win-x64.exe"),
-                Path.Combine(baseDir, "..", "..", "dist", "Kubek-4.0.2-win-x64.exe"),
-                Path.Combine(baseDir, "Kubek-4.0.2-win-x64.exe"),
             };
 
             foreach (var candidate in candidates)
@@ -126,6 +128,38 @@ namespace BlockHarbor.Desktop
             if (File.Exists(bunPath)) return bunPath;
 
             return null;
+        }
+
+        public static string GetWritableWorkingDirectory(string exePath)
+        {
+            var preferredDir = Path.GetDirectoryName(exePath) ?? AppDomain.CurrentDomain.BaseDirectory;
+            if (IsDirectoryWritable(preferredDir))
+            {
+                return preferredDir;
+            }
+
+            var localAppData = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "BlockHarbor"
+            );
+            Directory.CreateDirectory(localAppData);
+            return localAppData;
+        }
+
+        private static bool IsDirectoryWritable(string dirPath)
+        {
+            try
+            {
+                if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
+                var testFile = Path.Combine(dirPath, $".bh_write_test_{Guid.NewGuid():N}.tmp");
+                File.WriteAllText(testFile, "test");
+                File.Delete(testFile);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public async Task<bool> WaitForHealthAsync(int timeoutSeconds = 25)

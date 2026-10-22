@@ -83,7 +83,7 @@ jobs:
       - name: Build & Publish Desktop Native Host
         shell: powershell
         run: |
-          dotnet publish desktop/BlockHarbor.Desktop.csproj -c Release -r win-x64 --self-contained false -o dist/desktop
+          dotnet publish desktop/BlockHarbor.Desktop.csproj -c Release -r win-x64 --self-contained true -o dist/desktop
           Copy-Item dist/BlockHarbor-Backend.exe dist/desktop/BlockHarbor-Backend.exe -Force
           Copy-Item desktop/app.ico dist/desktop/app.ico -Force
 

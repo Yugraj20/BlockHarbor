@@ -6,7 +6,7 @@ import { useNotificationTitleStore } from "@/shared/stores/notification-title-st
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-const APP_NAME = "Kubek";
+const APP_NAME = "BlockHarbor";
 
 // Routes outside the main navigation that should still have a translated title
 const EXTRA_TITLE_KEYS: Record<string, string> = {

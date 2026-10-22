@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { qk } from "@/shared/queries/query-keys"
 
 /** GitHub repository backing the changelog */
-export const GITHUB_REPO = "Seeroy/kubek-minecraft-dashboard"
+export const GITHUB_REPO = "Yugraj20/BlockHarbor"
 export const GITHUB_REPO_URL = `https://github.com/${GITHUB_REPO}`
 
 export interface GithubRelease {

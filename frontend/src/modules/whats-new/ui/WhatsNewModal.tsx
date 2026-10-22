@@ -20,7 +20,7 @@ export interface WhatsNewModalProps {
 
 export const WHATS_NEW_MODAL_ID = "whats-new";
 
-const GITHUB_REPO = "Seeroy/kubek-minecraft-dashboard";
+const GITHUB_REPO = "Yugraj20/BlockHarbor";
 
 declare module "@/shared/types/modal-registry" {
   interface ModalRegistry {

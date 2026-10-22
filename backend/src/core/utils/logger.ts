@@ -18,7 +18,7 @@ export class LoggerAddon extends ConsoleLogger {
 
   constructor() {
     super({
-      prefix: "Kubek",
+      prefix: "BlockHarbor",
       compact: true,
       timestamp: false,
       logLevels: LOG_LEVELS,

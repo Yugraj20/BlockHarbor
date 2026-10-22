@@ -18,15 +18,13 @@ const backendDir = path.join(rootDir, "backend");
 const sharedDir = path.join(rootDir, "shared");
 const outputDir = path.join(rootDir, "dist");
 
-// Build targets
+// Build targets (Windows-only native desktop application)
 const targets: IBuildTarget[] = [
   {
     platform: "bun-windows-x64",
     suffix: "win-x64.exe",
     outputName: "main.exe",
   },
-  { platform: "bun-linux-x64", suffix: "linux-x64", outputName: "main" },
-  { platform: "bun-darwin-arm64", suffix: "darwin-arm64", outputName: "main" },
 ];
 
 interface BuildOptions {
@@ -80,7 +78,7 @@ function parseArgs(): BuildOptions {
 
 function showHelp() {
   console.log(`
-Build Script for Kubek
+Build Script for BlockHarbor
 
 Usage:
   bun run build.ts [options]
