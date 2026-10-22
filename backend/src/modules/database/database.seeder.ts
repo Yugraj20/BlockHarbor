@@ -36,7 +36,7 @@ export class DatabaseSeeder implements OnModuleInit {
       return;
     }
 
-    const defaultPassword = process.env.BLOCKHARBOR_ADMIN_PASSWORD || "admin";
+    const defaultPassword = process.env.BLOCKHARBOR_ADMIN_PASSWORD || "admin123";
     const hashedPassword = await hashPassword(defaultPassword);
 
     const defaultUser = {
