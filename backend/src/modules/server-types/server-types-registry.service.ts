@@ -149,7 +149,11 @@ export class ServerTypesRegistry implements OnModuleInit {
   }
 
   get(id: string): LoadedBlueprint | undefined {
-    return this.blueprints.get(id);
+    return (
+      this.blueprints.get(id) ||
+      this.blueprints.get(id.replace("com.kubek.", "com.blockharbor.")) ||
+      this.blueprints.get(id.replace("com.blockharbor.", "com.kubek."))
+    );
   }
 
   /**

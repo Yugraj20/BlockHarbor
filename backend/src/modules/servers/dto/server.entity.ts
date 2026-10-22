@@ -34,7 +34,7 @@ export class ServerEntity {
   })
   folderId?: string | null;
 
-  @ApiProperty({ description: "Blueprint id", example: "com.kubek.paper" })
+  @ApiProperty({ description: "Blueprint id", example: "com.blockharbor.paper" })
   blueprintId: string;
 
   @ApiProperty({ required: false, description: "Blueprint version" })

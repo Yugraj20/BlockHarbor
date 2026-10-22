@@ -91,7 +91,7 @@ export class BeginTotpResponseDto {
 
   @ApiProperty({
     description: "otpauth:// provisioning URI",
-    example: "otpauth://totp/Kubek:admin?secret=...",
+    example: "otpauth://totp/BlockHarbor:admin?secret=...",
   })
   otpauthUrl: string;
 

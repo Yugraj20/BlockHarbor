@@ -180,7 +180,7 @@ export const sidebarTranslations: TranslationDictionary = {
       },
       import: {
         title: "Импорт сервера",
-        description: "Выберите zip-архив, экспортированный из kubek",
+        description: "Выберите zip-архив, экспортированный из BlockHarbor",
         dropzone: "Перетащите zip-файл сюда или нажмите для выбора",
         selected: (name: string) => `Выбран файл: ${name}`,
         optionalNameLabel: "Имя нового сервера (необязательно)",

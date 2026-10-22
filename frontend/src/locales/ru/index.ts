@@ -34,7 +34,7 @@ export const ruTranslations: TranslationDictionary = {
   common: {
     code: "ru",
     name: "Русский",
-    author: "Kubek Team",
+    author: "BlockHarbor Team",
   },
   modules: {
     plugins: pluginsTranslations,

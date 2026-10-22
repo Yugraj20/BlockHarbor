@@ -2,13 +2,13 @@ import type { KubekBlueprintManifest } from "@kubekpanel/blueprint-sdk";
 
 export const velocity = {
   manifestVersion: 1,
-  id: "com.kubek.velocity",
+  id: "com.blockharbor.velocity",
   name: "Velocity",
   shortName: "Velocity",
   description: "Modern, high performance Minecraft proxy",
   game: "minecraft",
   author: {
-    name: "Kubek Team",
+    name: "BlockHarbor Team",
   },
   version: "1.0.0",
   tags: ["minecraft", "java", "proxy"],

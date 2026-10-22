@@ -26,11 +26,13 @@ export const EMPTY_WIZARD_VALUES: WizardValues = {
   runtimeDocker: false,
 };
 
-const CUSTOM_BLUEPRINT_ID = "com.kubek.custom";
+const CUSTOM_BLUEPRINT_ID = "com.blockharbor.custom";
+const isCustomBlueprint = (id?: string) =>
+  id === "com.blockharbor.custom" || id === "com.kubek.custom";
 
 /** A blueprint with no version list needs an uploaded core file */
 export function blueprintNeedsCoreFile(bp: BlueprintSummary): boolean {
-  return bp.id === CUSTOM_BLUEPRINT_ID;
+  return isCustomBlueprint(bp.id);
 }
 
 export function primaryPort(bp: BlueprintSummary): PortSpec | undefined {

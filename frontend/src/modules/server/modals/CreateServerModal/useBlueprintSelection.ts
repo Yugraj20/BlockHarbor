@@ -108,8 +108,9 @@ export function useBlueprintSelection({
   useEffect(() => {
     if (!isOpen || blueprintId || supportedBlueprints.length === 0) return;
     const preferred =
-      supportedBlueprints.find((b) => b.id === "com.kubek.paper") ??
-      supportedBlueprints[0];
+      supportedBlueprints.find(
+        (b) => b.id === "com.blockharbor.paper" || b.id === "com.kubek.paper"
+      ) ?? supportedBlueprints[0];
     selectBlueprint(preferred);
   }, [isOpen, blueprintId, supportedBlueprints, selectBlueprint]);
 

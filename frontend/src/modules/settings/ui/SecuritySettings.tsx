@@ -183,7 +183,7 @@ export default function SecuritySettings({ form }: SecuritySettingsProps) {
               <p className="text-sm text-muted-foreground">
                 {t("security.telemetry.toggleDescriptionStart")}
                 <code className="mx-1 rounded bg-muted px-1 py-0.5 text-xs">
-                  KUBEK_TELEMETRY=off
+                  BLOCKHARBOR_TELEMETRY=off
                 </code>
                 {t("security.telemetry.toggleDescriptionEnd")}
               </p>

@@ -6,7 +6,7 @@ import { ApiProperty } from "@nestjs/swagger";
 
 /** Summary of an installable server-type blueprint, as listed for server creation */
 export class ServerTypeDto {
-  @ApiProperty({ description: "Blueprint id", example: "com.kubek.paper" })
+  @ApiProperty({ description: "Blueprint id", example: "com.blockharbor.paper" })
   id: string;
 
   @ApiProperty({ description: "Display name", example: "Paper" })
@@ -75,7 +75,7 @@ export class ServerTypeDto {
 
 /** Result of installing a blueprint from an uploaded file */
 export class ServerTypeInstallResponseDto {
-  @ApiProperty({ description: "Blueprint id", example: "com.kubek.paper" })
+  @ApiProperty({ description: "Blueprint id", example: "com.blockharbor.paper" })
   id: string;
 
   @ApiProperty({ description: "Display name", example: "Paper" })

@@ -96,7 +96,7 @@ export const ExtensionsManager = () => {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".kubekext,.zip,.json"
+              accept=".bhext,.kubekext,.zip,.json"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];

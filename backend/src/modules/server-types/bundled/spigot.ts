@@ -2,13 +2,13 @@ import type { KubekBlueprintManifest } from "@kubekpanel/blueprint-sdk";
 
 export const spigot = {
   manifestVersion: 1,
-  id: "com.kubek.spigot",
+  id: "com.blockharbor.spigot",
   name: "Spigot",
   shortName: "Spigot",
   description: "Classic Bukkit-based server",
   game: "minecraft",
   author: {
-    name: "Kubek Team",
+    name: "BlockHarbor Team",
   },
   version: "1.0.0",
   tags: ["minecraft", "java", "spigot"],
@@ -34,7 +34,7 @@ export const spigot = {
       SERVER_PORT: "{{SERVER_PORT}}",
       OVERRIDE_SERVER_PROPERTIES: "false",
       ENABLE_RCON: "TRUE",
-      RCON_PASSWORD: "kubek",
+      RCON_PASSWORD: "blockharbor",
       PUID: "{{HOST_UID}}",
       PGID: "{{HOST_GID}}",
     },

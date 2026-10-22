@@ -2,13 +2,13 @@ import type { KubekBlueprintManifest } from "@kubekpanel/blueprint-sdk";
 
 export const waterfall = {
   manifestVersion: 1,
-  id: "com.kubek.waterfall",
+  id: "com.blockharbor.waterfall",
   name: "Waterfall",
   shortName: "Waterfall",
   description: "BungeeCord proxy fork",
   game: "minecraft",
   author: {
-    name: "Kubek Team",
+    name: "BlockHarbor Team",
   },
   version: "1.0.0",
   tags: ["minecraft", "java", "proxy"],

@@ -6,10 +6,10 @@ export const en = {
   },
   start: {
     welcomeBack:
-      "👋 Welcome back! Your Telegram is linked to your Kubek account.",
+      "👋 Welcome back! Your Telegram is linked to your BlockHarbor account.",
     welcomeNew:
-      "🚀 <b>Welcome to the Kubek bot!</b> 🎮\n\n" +
-      "🔗 To link your Telegram with your Kubek account, open the panel settings, copy the OTP code and send it here.",
+      "🚀 <b>Welcome to the BlockHarbor bot!</b> 🎮\n\n" +
+      "🔗 To link your Telegram with your BlockHarbor account, open the panel settings, copy the OTP code and send it here.",
   },
   help: {
     text:
@@ -22,7 +22,7 @@ export const en = {
       "🔗 /unlink - unlink your Telegram account",
   },
   menu: {
-    text: "🎮 <b>Kubek Bot</b>\n\nChoose an action below 👇",
+    text: "🎮 <b>BlockHarbor Bot</b>\n\nChoose an action below 👇",
   },
   commands: {
     start: "Link or check your account",
@@ -59,15 +59,15 @@ export const en = {
   },
   unlink: {
     notLinked: "🔗 Your account is not linked.",
-    done: "🔌 Your Telegram account has been unlinked from Kubek.",
+    done: "🔌 Your Telegram account has been unlinked from BlockHarbor.",
   },
   otp: {
     invalid: "❌ Invalid or expired OTP code.",
     accountLinkedElsewhere:
-      "❌ This Kubek account is already linked to another Telegram account.",
+      "❌ This BlockHarbor account is already linked to another Telegram account.",
     telegramLinkedElsewhere:
-      "❌ This Telegram account is already linked to another Kubek account.",
-    success: "✅ Your Telegram account has been linked to Kubek! 🎉",
+      "❌ This Telegram account is already linked to another BlockHarbor account.",
+    success: "✅ Your Telegram account has been linked to BlockHarbor! 🎉",
     failed: "❌ Failed to link account. Please try again.",
   },
   language: {

@@ -62,7 +62,7 @@ export class AccountsService {
   createDefaultAccount(hashedPassword: string): IUser {
     const defaultUser: IUser = {
       id: randomUUID(),
-      username: "kubek",
+      username: "admin",
       password: hashedPassword,
       secret: "",
       permissions: Object.values(UserPermissions),

@@ -44,7 +44,7 @@ export const consoleTranslations: TranslationDictionary = {
     unknownUser: "Неизвестный пользователь",
     badges: {
       telegram: "Telegram",
-      kubek: "Kubek",
+      kubek: "BlockHarbor",
     },
     userInput: {
       executedCommand: " выполнил команду: ",

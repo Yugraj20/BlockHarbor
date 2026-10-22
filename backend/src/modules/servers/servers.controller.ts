@@ -56,7 +56,8 @@ import type { IUser } from "@shared/types/user.types";
 import { UserPermissions } from "@shared/types/user.types";
 import { plainToInstance } from "class-transformer";
 import { validateSync } from "class-validator";
-import { existsSync } from "fs";
+import { existsSync, readFileSync, statSync, writeFileSync } from "fs";
+import { Branding } from "@/core/constants/branding";
 import { memoryStorage } from "multer";
 import { join } from "path";
 
@@ -131,7 +132,7 @@ export class ServersController {
           description: "JSON string containing CreateServerDto payload",
           example: JSON.stringify({
             name: "My server",
-            blueprintId: "com.kubek.paper",
+            blueprintId: "com.blockharbor.paper",
             variables: {
               GAME_VERSION: "1.21.1",
               XMX: 2048,
@@ -144,7 +145,7 @@ export class ServersController {
           type: "string",
           format: "binary",
           description:
-            "Custom core JAR file (required for the com.kubek.custom blueprint)",
+            "Custom core JAR file (required for the com.blockharbor.custom blueprint)",
         },
       },
       required: ["payload"],
@@ -175,7 +176,11 @@ export class ServersController {
       throw new BadRequestException(errors);
     }
 
-    if (dto.blueprintId === "com.kubek.custom" && !coreFile) {
+    if (
+      (dto.blueprintId === "com.blockharbor.custom" ||
+        dto.blueprintId === "com.kubek.custom") &&
+      !coreFile
+    ) {
       throw new BadRequestException("coreFile is required for custom servers");
     }
 
@@ -541,7 +546,7 @@ export class ServersController {
           type: "string",
           description: "JSON string containing ChangeServerCoreDto payload",
           example: JSON.stringify({
-            blueprintId: "com.kubek.purpur",
+            blueprintId: "com.blockharbor.purpur",
             version: "1.21.4",
           }),
         },
@@ -549,7 +554,7 @@ export class ServersController {
           type: "string",
           format: "binary",
           description:
-            "Custom core JAR file (required for the com.kubek.custom blueprint)",
+            "Custom core JAR file (required for the com.blockharbor.custom blueprint)",
         },
       },
       required: ["payload"],
@@ -587,7 +592,11 @@ export class ServersController {
       throw new BadRequestException(errors);
     }
 
-    if (dto.blueprintId === "com.kubek.custom" && !coreFile) {
+    if (
+      (dto.blueprintId === "com.blockharbor.custom" ||
+        dto.blueprintId === "com.kubek.custom") &&
+      !coreFile
+    ) {
       throw new BadRequestException("coreFile is required for custom cores");
     }
 
@@ -605,7 +614,28 @@ export class ServersController {
     const iconPath = join(process.cwd(), "servers", id, "server-icon.png");
 
     if (!existsSync(iconPath)) {
-      throw new NotFoundException("Server icon not found");
+      const iconBuffer = Buffer.from(Branding.Base64Icon, "base64");
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Cache-Control", "no-cache");
+      return res.send(iconBuffer);
+    }
+
+    try {
+      const stats = statSync(iconPath);
+      // Replace legacy Kubek default icon with BlockHarbor icon
+      if (stats.size === 3759 || stats.size === 3777 || stats.size === 5012) {
+        writeFileSync(iconPath, Buffer.from(Branding.Base64Icon, "base64"));
+      } else {
+        const fileContent = readFileSync(iconPath);
+        if (
+          fileContent.includes(Buffer.from("photoshop", "utf-8")) ||
+          fileContent.includes(Buffer.from("Adobe", "utf-8"))
+        ) {
+          writeFileSync(iconPath, Buffer.from(Branding.Base64Icon, "base64"));
+        }
+      }
+    } catch {
+      // ignore
     }
 
     res.sendFile(iconPath);

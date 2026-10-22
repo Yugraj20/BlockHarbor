@@ -2,13 +2,13 @@ import type { KubekBlueprintManifest } from "@kubekpanel/blueprint-sdk";
 
 export const vanilla = {
   manifestVersion: 1,
-  id: "com.kubek.vanilla",
+  id: "com.blockharbor.vanilla",
   name: "Vanilla",
   shortName: "Vanilla",
   description: "Official Minecraft server",
   game: "minecraft",
   author: {
-    name: "Kubek Team",
+    name: "BlockHarbor Team",
   },
   version: "1.0.0",
   tags: ["minecraft", "java", "vanilla"],
@@ -34,7 +34,7 @@ export const vanilla = {
       SERVER_PORT: "{{SERVER_PORT}}",
       OVERRIDE_SERVER_PROPERTIES: "false",
       ENABLE_RCON: "TRUE",
-      RCON_PASSWORD: "kubek",
+      RCON_PASSWORD: "blockharbor",
       PUID: "{{HOST_UID}}",
       PGID: "{{HOST_GID}}",
     },

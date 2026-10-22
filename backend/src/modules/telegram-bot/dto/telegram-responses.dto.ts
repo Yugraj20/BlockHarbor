@@ -13,13 +13,13 @@ export class GenerateOtpResponseDto {
 export class BotInfoResponseDto {
   @ApiProperty({
     description: "Bot display name (empty when unavailable)",
-    example: "Kubek Bot",
+    example: "BlockHarbor Bot",
   })
   name: string;
 
   @ApiProperty({
     description: "Bot username (empty when unavailable)",
-    example: "kubek_bot",
+    example: "blockharbor_bot",
   })
   username: string;
 
@@ -30,12 +30,12 @@ export class BotInfoResponseDto {
   error?: string;
 }
 
-/** A Telegram user linked to a Kubek account */
+/** A Telegram user linked to a BlockHarbor account */
 export class LinkedTelegramUserDto {
   @ApiProperty({ description: "Telegram user id", example: 123456789 })
   id: number;
 
-  @ApiProperty({ description: "Kubek user id" })
+  @ApiProperty({ description: "BlockHarbor user id" })
   userId: string;
 
   @ApiProperty({ required: false, description: "Telegram username" })
@@ -61,7 +61,7 @@ export class LinkedTelegramUserDto {
   language?: "en" | "ru";
 }
 
-/** A linked Telegram user paired with the Kubek account name */
+/** A linked Telegram user paired with the BlockHarbor account name */
 export class LinkedUserResponseDto {
   @ApiProperty({
     type: LinkedTelegramUserDto,
@@ -69,6 +69,6 @@ export class LinkedUserResponseDto {
   })
   telegramUser: LinkedTelegramUserDto;
 
-  @ApiProperty({ description: "Kubek account username", example: "admin" })
+  @ApiProperty({ description: "BlockHarbor account username", example: "admin" })
   accountName: string;
 }

@@ -8,7 +8,7 @@ export class CreateServerDto implements NewServerProps {
   @IsNotEmpty()
   name!: string;
 
-  @ApiProperty({ example: "com.kubek.paper" })
+  @ApiProperty({ example: "com.blockharbor.paper" })
   @IsString()
   @IsNotEmpty()
   blueprintId!: string;

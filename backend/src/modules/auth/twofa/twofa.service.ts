@@ -25,7 +25,7 @@ import * as qrcode from "qrcode";
 
 const CHALLENGE_TTL_MS = 3 * 60 * 1000;
 const SETUP_TOKEN_TTL_MS = 10 * 60 * 1000;
-const TOTP_ISSUER = "Kubek";
+const TOTP_ISSUER = "BlockHarbor";
 const MAX_TOTP_ATTEMPTS = 5;
 const SETUP_SECRET_CONFIG_KEY = "twofaSetupSecret";
 
@@ -399,6 +399,8 @@ export class TwofaService implements OnModuleInit {
   }
 
   private setupSecret(): string {
+    if (process.env.BLOCKHARBOR_2FA_SETUP_SECRET)
+      return process.env.BLOCKHARBOR_2FA_SETUP_SECRET;
     if (process.env.KUBEK_2FA_SETUP_SECRET)
       return process.env.KUBEK_2FA_SETUP_SECRET;
     if (this.setupSecretCache) return this.setupSecretCache;
@@ -408,6 +410,8 @@ export class TwofaService implements OnModuleInit {
 
   // Generate a per-install secret on first use and persist it
   private loadOrCreateSetupSecret(): string {
+    if (process.env.BLOCKHARBOR_2FA_SETUP_SECRET)
+      return process.env.BLOCKHARBOR_2FA_SETUP_SECRET;
     if (process.env.KUBEK_2FA_SETUP_SECRET)
       return process.env.KUBEK_2FA_SETUP_SECRET;
     const existing = this.config.get(SETUP_SECRET_CONFIG_KEY);
@@ -415,7 +419,7 @@ export class TwofaService implements OnModuleInit {
     if (process.env.NODE_ENV === "production") {
       // Generate and persist is fine in dev
       this.logger.warn(
-        "KUBEK_2FA_SETUP_SECRET is not set; generating and persisting one",
+        "BLOCKHARBOR_2FA_SETUP_SECRET is not set; generating and persisting one",
       );
     }
     const generated = randomBytes(32).toString("hex");

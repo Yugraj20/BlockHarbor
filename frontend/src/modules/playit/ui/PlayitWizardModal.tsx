@@ -46,6 +46,12 @@ interface PlayitWizardModalProps {
   onTunnelCreated: () => void;
 }
 
+function getBlueprintDisplay(id?: string): string {
+  if (!id) return "Minecraft Server";
+  const name = id.replace(/^(com\.(kubek|blockharbor)\.)/i, "");
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
 export function PlayitWizardModal({
   open,
   onOpenChange,
@@ -242,7 +248,7 @@ export function PlayitWizardModal({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-400">Blueprint:</span>
-                  <span className="text-zinc-200">{selectedServer.blueprintId}</span>
+                  <span className="text-zinc-200">{getBlueprintDisplay(selectedServer.blueprintId)}</span>
                 </div>
               </div>
             )}

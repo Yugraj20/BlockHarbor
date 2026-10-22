@@ -18,7 +18,7 @@ async function main() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle("Kubek - Minecraft Server Management")
+    .setTitle("BlockHarbor - Native Minecraft Server Platform")
     .setVersion("1.0")
     .addBearerAuth(
       {

@@ -447,7 +447,9 @@ export class ServersFactory {
     const manifestPath = path.join(sourceDir, EXPORT_MANIFEST_FILE);
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
 
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "kubek-export-"));
+    const tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "blockharbor-export-"),
+    );
     const archivePath = path.join(tempDir, "server.zip");
 
     try {
@@ -474,7 +476,7 @@ export class ServersFactory {
 
     const safeName = server.name.replace(/[^\p{L}\p{N}._-]+/gu, "_");
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    const suggestedName = `kubek-export-${safeName}-${date}.zip`;
+    const suggestedName = `blockharbor-export-${safeName}-${date}.zip`;
 
     return {
       archivePath,
@@ -491,7 +493,9 @@ export class ServersFactory {
     overrideName: string | undefined,
     ownerId: string,
   ): Promise<{ server: IServer; taskId: string }> {
-    const extractDir = fs.mkdtempSync(path.join(os.tmpdir(), "kubek-import-"));
+    const extractDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "blockharbor-import-"),
+    );
     const archivePath = path.join(extractDir, "upload.zip");
     fs.writeFileSync(archivePath, file.buffer);
 
@@ -504,7 +508,9 @@ export class ServersFactory {
     const manifestPath = path.join(extractDir, EXPORT_MANIFEST_FILE);
     if (!fs.existsSync(manifestPath)) {
       fs.rmSync(extractDir, { recursive: true, force: true });
-      throw new BadRequestException("Manifest missing - not a kubek export");
+      throw new BadRequestException(
+        "Manifest missing - not a valid BlockHarbor export",
+      );
     }
 
     let manifest: ExportManifest;

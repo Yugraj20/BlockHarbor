@@ -12,4 +12,4 @@ export const EXPORT_MANIFEST_VERSION = 1;
 /**
  * Blueprint id for custom jar
  */
-export const CUSTOM_BLUEPRINT_ID = "com.kubek.custom";
+export const CUSTOM_BLUEPRINT_ID = "com.blockharbor.custom";

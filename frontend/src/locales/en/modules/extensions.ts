@@ -7,7 +7,7 @@ export const extensionsTranslations: TranslationDictionary = {
     description: "Install panel extensions, review the access they request, enable or remove them",
   },
   upload: {
-    hint: "Upload a .kubekext package",
+    hint: "Upload an extension package (.zip or .json)",
     choose: "Choose file",
   },
   securityNotice: {

@@ -1,1 +1,1 @@
-export const NOTIFICATION_SOUND_STORAGE_KEY = "kubek:notificationSoundEnabled";
+export const NOTIFICATION_SOUND_STORAGE_KEY = "blockharbor:notificationSoundEnabled";

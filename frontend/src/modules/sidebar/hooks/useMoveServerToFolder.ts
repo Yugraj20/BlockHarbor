@@ -30,4 +30,4 @@ export function useMoveServerToFolder() {
 }
 
 // Shared key for the native DnD payload
-export const SERVER_DND_MIME = "application/x-kubek-server-id";
+export const SERVER_DND_MIME = "application/x-blockharbor-server-id";

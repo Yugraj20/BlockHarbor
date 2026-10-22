@@ -3,7 +3,7 @@ import { ApiProperty } from "@nestjs/swagger";
 export class SystemInfoDto {
   @ApiProperty({
     description: "System hostname",
-    example: "kubek-server",
+    example: "blockharbor-server",
   })
   hostname: string;
 

@@ -7,7 +7,7 @@ import { IsString, MaxLength, MinLength } from "class-validator";
 export class LoginDto {
   @ApiProperty({
     description: "Username",
-    example: "kubek",
+    example: "admin",
     minLength: 3,
     maxLength: 32,
   })
@@ -18,7 +18,7 @@ export class LoginDto {
 
   @ApiProperty({
     description: "Password",
-    example: "Kubek2026",
+    example: "admin123",
     minLength: 6,
     maxLength: 64,
   })

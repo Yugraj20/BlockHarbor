@@ -8,10 +8,10 @@ export const ru: typeof en = {
       "❓ Неизвестная команда. Используйте /help для списка команд.",
   },
   start: {
-    welcomeBack: "👋 С возвращением! Ваш Telegram привязан к аккаунту Kubek.",
+    welcomeBack: "👋 С возвращением! Ваш Telegram привязан к аккаунту BlockHarbor.",
     welcomeNew:
-      "🚀 <b>Добро пожаловать в бота Kubek!</b> 🎮\n\n" +
-      "🔗 Чтобы привязать Telegram к аккаунту Kubek, откройте настройки панели, скопируйте OTP-код и отправьте его сюда.",
+      "🚀 <b>Добро пожаловать в бота BlockHarbor!</b> 🎮\n\n" +
+      "🔗 Чтобы привязать Telegram к аккаунту BlockHarbor, откройте настройки панели, скопируйте OTP-код и отправьте его сюда.",
   },
   help: {
     text:
@@ -24,7 +24,7 @@ export const ru: typeof en = {
       "🔗 /unlink - отвязать Telegram",
   },
   menu: {
-    text: "🎮 <b>Бот Kubek</b>\n\nВыберите действие ниже 👇",
+    text: "🎮 <b>Бот BlockHarbor</b>\n\nВыберите действие ниже 👇",
   },
   commands: {
     start: "Привязать или проверить аккаунт",
@@ -53,15 +53,15 @@ export const ru: typeof en = {
   },
   unlink: {
     notLinked: "🔗 Ваш аккаунт не привязан.",
-    done: "🔌 Ваш Telegram отвязан от Kubek.",
+    done: "🔌 Ваш Telegram отвязан от BlockHarbor.",
   },
   otp: {
     invalid: "❌ Неверный или просроченный OTP-код.",
     accountLinkedElsewhere:
-      "❌ Этот аккаунт Kubek уже привязан к другому Telegram.",
+      "❌ Этот аккаунт BlockHarbor уже привязан к другому Telegram.",
     telegramLinkedElsewhere:
-      "❌ Этот Telegram уже привязан к другому аккаунту Kubek.",
-    success: "✅ Ваш Telegram привязан к аккаунту Kubek! 🎉",
+      "❌ Этот Telegram уже привязан к другому аккаунту BlockHarbor.",
+    success: "✅ Ваш Telegram привязан к аккаунту BlockHarbor! 🎉",
     failed: "❌ Не удалось привязать аккаунт. Попробуйте ещё раз.",
   },
   language: {

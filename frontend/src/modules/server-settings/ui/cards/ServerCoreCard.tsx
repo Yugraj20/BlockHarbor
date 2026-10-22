@@ -79,7 +79,7 @@ export const ServerCoreCard = () => {
           <BlueprintIcon
             icon={currentBlueprint?.icon}
             coreType={iconType(selectedServer.blueprintId)}
-            label={currentBlueprint?.name ?? selectedServer.blueprintId}
+            label={currentBlueprint?.name ?? selectedServer.blueprintId?.replace(/^com\.(kubek|blockharbor)\./, "")}
             className="size-6"
           />
           <div className="flex flex-col">
@@ -87,7 +87,7 @@ export const ServerCoreCard = () => {
               {tc("currentCore")}
             </span>
             <span className="text-sm font-medium">
-              {currentBlueprint?.name ?? selectedServer.blueprintId}
+              {currentBlueprint?.name ?? selectedServer.blueprintId?.replace(/^com\.(kubek|blockharbor)\./, "")}
               {currentVersion ? ` · ${currentVersion}` : ""}
             </span>
           </div>

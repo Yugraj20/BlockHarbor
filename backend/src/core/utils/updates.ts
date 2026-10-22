@@ -17,6 +17,7 @@ export interface UpdateCheckResult {
  */
 export function getVersion(): string {
   // Injected at compile time by the build script
+  if (process.env.BLOCKHARBOR_VERSION) return process.env.BLOCKHARBOR_VERSION;
   if (process.env.KUBEK_VERSION) return process.env.KUBEK_VERSION;
 
   try {
@@ -38,7 +39,7 @@ export async function checkForUpdates(): Promise<UpdateCheckResult> {
   try {
     const latestRelease = await ky
       .get(
-        "https://api.github.com/repos/Seeroy/kubek-minecraft-dashboard/releases/latest",
+        "https://api.github.com/repos/Yugraj20/BlockHarbor/releases/latest",
         { timeout: 6000 },
       )
       .json<{ tag_name: string; body?: string }>();

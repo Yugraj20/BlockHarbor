@@ -2,13 +2,13 @@ import type { KubekBlueprintManifest } from "@kubekpanel/blueprint-sdk";
 
 export const folia = {
   manifestVersion: 1,
-  id: "com.kubek.folia",
+  id: "com.blockharbor.folia",
   name: "Folia",
   shortName: "Folia",
   description: "Regionised multithreaded Paper fork",
   game: "minecraft",
   author: {
-    name: "Kubek Team",
+    name: "BlockHarbor Team",
   },
   version: "1.0.0",
   tags: ["minecraft", "java", "folia"],
@@ -34,7 +34,7 @@ export const folia = {
       SERVER_PORT: "{{SERVER_PORT}}",
       OVERRIDE_SERVER_PROPERTIES: "false",
       ENABLE_RCON: "TRUE",
-      RCON_PASSWORD: "kubek",
+      RCON_PASSWORD: "blockharbor",
       PUID: "{{HOST_UID}}",
       PGID: "{{HOST_GID}}",
     },

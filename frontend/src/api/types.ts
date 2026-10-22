@@ -2273,12 +2273,12 @@ export interface components {
         BotInfoResponseDto: {
             /**
              * @description Bot display name (empty when unavailable)
-             * @example Kubek Bot
+             * @example BlockHarbor Bot
              */
             name: string;
             /**
              * @description Bot username (empty when unavailable)
-             * @example kubek_bot
+             * @example blockharbor_bot
              */
             username: string;
             /** @description Error message when the bot is unavailable */
@@ -2290,7 +2290,7 @@ export interface components {
              * @example 123456789
              */
             id: number;
-            /** @description Kubek user id */
+            /** @description BlockHarbor user id */
             userId: string;
             /** @description Telegram username */
             username?: string;
@@ -2312,7 +2312,7 @@ export interface components {
             /** @description Linked Telegram user */
             telegramUser: components["schemas"]["LinkedTelegramUserDto"];
             /**
-             * @description Kubek account username
+             * @description BlockHarbor account username
              * @example admin
              */
             accountName: string;
@@ -2344,7 +2344,7 @@ export interface components {
             folderId?: string | null;
             /**
              * @description Blueprint id
-             * @example com.kubek.paper
+             * @example com.blockharbor.paper
              */
             blueprintId: string;
             /** @description Blueprint version */
@@ -2368,7 +2368,7 @@ export interface components {
         CreateServerDto: {
             /** @example My Server */
             name: string;
-            /** @example com.kubek.paper */
+            /** @example com.blockharbor.paper */
             blueprintId: string;
             /**
              * @description Blueprint variable values keyed by variable/port key
@@ -2474,7 +2474,7 @@ export interface components {
         ChangeServerCoreDto: {
             /**
              * @description Target blueprint (core) id to switch to
-             * @example com.kubek.purpur
+             * @example com.blockharbor.purpur
              */
             blueprintId: string;
             /**
@@ -2533,7 +2533,7 @@ export interface components {
         ServerTypeDto: {
             /**
              * @description Blueprint id
-             * @example com.kubek.paper
+             * @example com.blockharbor.paper
              */
             id: string;
             /**
@@ -2587,7 +2587,7 @@ export interface components {
         ServerTypeInstallResponseDto: {
             /**
              * @description Blueprint id
-             * @example com.kubek.paper
+             * @example com.blockharbor.paper
              */
             id: string;
             /**
@@ -2687,7 +2687,7 @@ export interface components {
             secret: string;
             /**
              * @description otpauth:// provisioning URI
-             * @example otpauth://totp/Kubek:admin?secret=...
+             * @example otpauth://totp/BlockHarbor:admin?secret=...
              */
             otpauthUrl: string;
             /**
@@ -5036,12 +5036,12 @@ export interface operations {
                 "multipart/form-data": {
                     /**
                      * @description JSON string containing CreateServerDto payload
-                     * @example {"name":"My server","blueprintId":"com.kubek.paper","variables":{"GAME_VERSION":"1.21.1","XMX":2048,"JAVA_VERSION":21,"game":25565}}
+                     * @example {"name":"My server","blueprintId":"com.blockharbor.paper","variables":{"GAME_VERSION":"1.21.1","XMX":2048,"JAVA_VERSION":21,"game":25565}}
                      */
                     payload: string;
                     /**
                      * Format: binary
-                     * @description Custom core JAR file (required for the com.kubek.custom blueprint)
+                     * @description Custom core JAR file (required for the com.blockharbor.custom blueprint)
                      */
                     coreFile?: string;
                 };
@@ -5904,12 +5904,12 @@ export interface operations {
                 "multipart/form-data": {
                     /**
                      * @description JSON string containing ChangeServerCoreDto payload
-                     * @example {"blueprintId":"com.kubek.purpur","version":"1.21.4"}
+                     * @example {"blueprintId":"com.blockharbor.purpur","version":"1.21.4"}
                      */
                     payload: string;
                     /**
                      * Format: binary
-                     * @description Custom core JAR file (required for the com.kubek.custom blueprint)
+                     * @description Custom core JAR file (required for the com.blockharbor.custom blueprint)
                      */
                     coreFile?: string;
                 };

@@ -149,6 +149,14 @@ export class SqliteProvider implements OnModuleInit {
       `CREATE INDEX IF NOT EXISTS idx_servers_folder_id ON servers (folderId);`,
     );
 
+    try {
+      this.db.run(
+        `UPDATE servers SET blueprintId = REPLACE(blueprintId, 'com.kubek.', 'com.blockharbor.') WHERE blueprintId LIKE 'com.kubek.%';`,
+      );
+    } catch {
+      // ignore
+    }
+
     const serverColumns = this.db.query(`PRAGMA table_info(servers)`).all() as {
       name: string;
     }[];

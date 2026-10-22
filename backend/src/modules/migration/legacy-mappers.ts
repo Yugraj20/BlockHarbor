@@ -86,9 +86,9 @@ function inferBlueprintId(
   isBedrock: boolean,
   coreType: ServerCoreType,
 ): string {
-  if (isBedrock) return "com.kubek.bedrock";
-  if (coreType === "custom") return "com.kubek.custom";
-  return `com.kubek.${coreType}`;
+  if (isBedrock) return "com.blockharbor.bedrock";
+  if (coreType === "custom") return "com.blockharbor.custom";
+  return `com.blockharbor.${coreType}`;
 }
 
 function parseXmx(args: string[]): number | undefined {

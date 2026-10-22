@@ -2,8 +2,10 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Interop;
 using Microsoft.Web.WebView2.Core;
 using Forms = System.Windows.Forms;
 
@@ -11,6 +13,14 @@ namespace BlockHarbor.Desktop
 {
     public partial class MainWindow : Window
     {
+        [DllImport("dwmapi.dll", PreserveSig = true)]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+        private const int DWMWA_CAPTION_COLOR = 35;
+        private const int DWMWA_TEXT_COLOR = 36;
+
         private readonly int _port;
         private readonly ProcessSupervisor _supervisor;
         private Forms.NotifyIcon? _notifyIcon;
@@ -21,6 +31,8 @@ namespace BlockHarbor.Desktop
             _port = port;
             _supervisor = supervisor;
             InitializeComponent();
+
+            SourceInitialized += MainWindow_SourceInitialized;
 
             try
             {
@@ -38,6 +50,35 @@ namespace BlockHarbor.Desktop
             InitializeSystemTray();
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_SourceInitialized(object? sender, EventArgs e)
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(this).Handle;
+                if (hwnd != IntPtr.Zero)
+                {
+                    int useDarkMode = 1;
+                    // Apply immersive dark mode to native Windows title bar
+                    if (DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDarkMode, sizeof(int)) != 0)
+                    {
+                        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1, ref useDarkMode, sizeof(int));
+                    }
+
+                    // On Windows 11, set caption color to dark charcoal #0c1210 (COLORREF 0x0010120C)
+                    int captionColor = 0x0010120C;
+                    DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, ref captionColor, sizeof(int));
+
+                    // Title bar text color to off-white #f4f4f5 (COLORREF 0x00F5F4F4)
+                    int textColor = 0x00F5F4F4;
+                    DwmSetWindowAttribute(hwnd, DWMWA_TEXT_COLOR, ref textColor, sizeof(int));
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to set immersive dark mode: {ex.Message}");
+            }
         }
 
         private void InitializeSystemTray()

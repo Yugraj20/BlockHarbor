@@ -2,13 +2,13 @@ import type { KubekBlueprintManifest } from "@kubekpanel/blueprint-sdk";
 
 export const bedrock = {
   manifestVersion: 1,
-  id: "com.kubek.bedrock",
+  id: "com.blockharbor.bedrock",
   name: "Minecraft: Bedrock Edition",
   shortName: "Bedrock",
   description: "Official Bedrock dedicated server",
   game: "minecraft",
   author: {
-    name: "Kubek Team",
+    name: "BlockHarbor Team",
   },
   version: "1.0.0",
   tags: ["minecraft", "bedrock"],

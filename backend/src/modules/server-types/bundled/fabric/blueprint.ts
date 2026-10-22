@@ -2,13 +2,13 @@ import type { KubekBlueprintManifest } from "@kubekpanel/blueprint-sdk";
 
 export const fabric = {
   manifestVersion: 1,
-  id: "com.kubek.fabric",
+  id: "com.blockharbor.fabric",
   name: "Fabric",
   shortName: "Fabric",
   description: "Lightweight modding toolchain server",
   game: "minecraft",
   author: {
-    name: "Kubek Team",
+    name: "BlockHarbor Team",
   },
   version: "1.0.0",
   tags: ["minecraft", "java", "fabric", "mods"],
@@ -34,7 +34,7 @@ export const fabric = {
       SERVER_PORT: "{{SERVER_PORT}}",
       OVERRIDE_SERVER_PROPERTIES: "false",
       ENABLE_RCON: "TRUE",
-      RCON_PASSWORD: "kubek",
+      RCON_PASSWORD: "blockharbor",
       PUID: "{{HOST_UID}}",
       PGID: "{{HOST_GID}}",
     },

@@ -6,10 +6,10 @@
 
 Run, monitor, and share Minecraft servers locally on Windows with zero-configuration port forwarding, native process isolation, and a modern desktop experience.
 
-[![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](https://github.com/seeroy/kubek-minecraft-dashboard)
-[![Framework](https://img.shields.io/badge/.NET%2010-WPF%20%2B%20WebView2-512BD4?logo=dotnet&logoColor=white)](https://github.com/seeroy/kubek-minecraft-dashboard)
+[![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?logo=windows&logoColor=white)](https://github.com/Yugraj20/BlockHarbor)
+[![Framework](https://img.shields.io/badge/.NET%2010-WPF%20%2B%20WebView2-512BD4?logo=dotnet&logoColor=white)](https://github.com/Yugraj20/BlockHarbor)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v4.0.2-10b981)](https://github.com/seeroy/kubek-minecraft-dashboard/releases)
+[![Release](https://img.shields.io/badge/release-v4.0.2-10b981)](https://github.com/Yugraj20/BlockHarbor/releases)
 
 [Features](#-features) · [Playit.gg Integration](#-playitgg-integration) · [Desktop Architecture](#-desktop-architecture) · [Quick Start](#-quick-start) · [Building from Source](#-building-from-source) · [Documentation](#-documentation)
 
@@ -71,7 +71,7 @@ BlockHarbor/
 ├── WebView2Loader.dll           # Microsoft WebView2 native runtime loader
 ├── app.ico                      # Multi-resolution application icon
 └── data/                        # User state, databases, and server configurations
-    ├── kubek.db                 # Primary SQLite database
+    ├── blockharbor.db           # Primary SQLite database
     ├── servers/                 # Minecraft server directories
     └── backups/                 # Compressed world backups
 ```
@@ -84,7 +84,7 @@ BlockHarbor/
 ## 🚀 Quick Start
 
 ### Installation via Setup Wizard
-1. Download `BlockHarbor-Setup-x64.exe` from the latest [GitHub Release](https://github.com/seeroy/kubek-minecraft-dashboard/releases).
+1. Download `BlockHarbor-Setup-x64.exe` from the latest [GitHub Release](https://github.com/Yugraj20/BlockHarbor/releases).
 2. Run the installer. Choose whether to create Desktop and Start Menu shortcuts.
 3. Launch **BlockHarbor** from your Start Menu.
 4. Log in using the generated admin credentials displayed in the initial startup screen.

@@ -2,7 +2,7 @@ import { usTranslations } from "./en";
 import { ruTranslations } from "./ru";
 import type { LanguageDescriptor, TranslationDictionary } from "./types";
 
-export const LANGUAGE_STORAGE_KEY = "kubek:lastLanguage";
+export const LANGUAGE_STORAGE_KEY = "blockharbor:lastLanguage";
 
 export const translationResources = {
   us: usTranslations,

@@ -17,7 +17,9 @@ const versionKeyOf = (blueprint?: BlueprintSummary): string | undefined =>
   blueprint?.variables.find((v) => v.options?.from === "versions")?.key;
 
 /** Blueprint that runs a user-supplied jar and needs an upload */
-const CUSTOM_BLUEPRINT_ID = "com.kubek.custom";
+const CUSTOM_BLUEPRINT_ID = "com.blockharbor.custom";
+const isCustomBlueprint = (id?: string) =>
+  id === "com.blockharbor.custom" || id === "com.kubek.custom";
 
 /**
  * State + persistence for changing a server's core (blueprint) and version
@@ -64,7 +66,7 @@ export const useServerCoreSettings = () => {
     [blueprints, blueprintId]
   );
   const hasVersions = !!versionKeyOf(chosenBlueprint);
-  const isCustomChosen = blueprintId === CUSTOM_BLUEPRINT_ID;
+  const isCustomChosen = isCustomBlueprint(blueprintId);
 
   const selectableBlueprints = useMemo(() => blueprints ?? [], [blueprints]);
 

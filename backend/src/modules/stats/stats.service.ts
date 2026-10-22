@@ -30,14 +30,21 @@ export class StatsService implements OnModuleInit {
   }
 
   isTelemetryEnabled(): boolean {
-    if ((process.env.KUBEK_TELEMETRY ?? "").toLowerCase() === "off")
+    if (
+      (process.env.BLOCKHARBOR_TELEMETRY ?? "").toLowerCase() === "off" ||
+      (process.env.KUBEK_TELEMETRY ?? "").toLowerCase() === "off"
+    )
       return false;
     const config = this.configService.getAll();
-    return config.telemetry?.enabled !== false;
+    return config.telemetry?.enabled === true;
   }
 
   getTelemetryUrl(): string {
-    return process.env.KUBEK_TELEMETRY_URL ?? DEFAULT_TELEMETRY_URL;
+    return (
+      process.env.BLOCKHARBOR_TELEMETRY_URL ??
+      process.env.KUBEK_TELEMETRY_URL ??
+      DEFAULT_TELEMETRY_URL
+    );
   }
 
   getUniqueID(): string {

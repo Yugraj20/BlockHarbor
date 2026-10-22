@@ -7,7 +7,7 @@ import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 export class ChangeServerCoreDto {
   @ApiProperty({
     description: "Target blueprint (core) id to switch to",
-    example: "com.kubek.purpur",
+    example: "com.blockharbor.purpur",
   })
   @IsString()
   @IsNotEmpty()

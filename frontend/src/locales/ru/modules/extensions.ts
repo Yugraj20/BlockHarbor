@@ -7,7 +7,7 @@ export const extensionsTranslations: TranslationDictionary = {
     description: "Устанавливайте расширения панели, проверяйте запрашиваемый доступ, включайте или удаляйте их",
   },
   upload: {
-    hint: "Загрузите пакет .kubekext",
+    hint: "Загрузите пакет расширения (.zip или .json)",
     choose: "Выбрать файл",
   },
   securityNotice: {

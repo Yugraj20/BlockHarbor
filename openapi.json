@@ -1313,12 +1313,12 @@
                   "payload": {
                     "type": "string",
                     "description": "JSON string containing CreateServerDto payload",
-                    "example": "{\"name\":\"My server\",\"blueprintId\":\"com.kubek.paper\",\"variables\":{\"GAME_VERSION\":\"1.21.1\",\"XMX\":2048,\"JAVA_VERSION\":21,\"game\":25565}}"
+                    "example": "{\"name\":\"My server\",\"blueprintId\":\"com.blockharbor.paper\",\"variables\":{\"GAME_VERSION\":\"1.21.1\",\"XMX\":2048,\"JAVA_VERSION\":21,\"game\":25565}}"
                   },
                   "coreFile": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Custom core JAR file (required for the com.kubek.custom blueprint)"
+                    "description": "Custom core JAR file (required for the com.blockharbor.custom blueprint)"
                   }
                 },
                 "required": [
@@ -2585,12 +2585,12 @@
                   "payload": {
                     "type": "string",
                     "description": "JSON string containing ChangeServerCoreDto payload",
-                    "example": "{\"blueprintId\":\"com.kubek.purpur\",\"version\":\"1.21.4\"}"
+                    "example": "{\"blueprintId\":\"com.blockharbor.purpur\",\"version\":\"1.21.4\"}"
                   },
                   "coreFile": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Custom core JAR file (required for the com.kubek.custom blueprint)"
+                    "description": "Custom core JAR file (required for the com.blockharbor.custom blueprint)"
                   }
                 },
                 "required": [
@@ -10192,7 +10192,7 @@
     }
   },
   "info": {
-    "title": "Kubek - Minecraft Server Management",
+    "title": "BlockHarbor - Native Minecraft Server Platform",
     "description": "",
     "version": "1.0",
     "contact": {}
@@ -10461,14 +10461,14 @@
           "username": {
             "type": "string",
             "description": "Username",
-            "example": "kubek",
+            "example": "admin",
             "minLength": 3,
             "maxLength": 32
           },
           "password": {
             "type": "string",
             "description": "Password",
-            "example": "Kubek2026",
+            "example": "admin123",
             "minLength": 6,
             "maxLength": 64
           }
@@ -10857,12 +10857,12 @@
           "name": {
             "type": "string",
             "description": "Bot display name (empty when unavailable)",
-            "example": "Kubek Bot"
+            "example": "BlockHarbor Bot"
           },
           "username": {
             "type": "string",
             "description": "Bot username (empty when unavailable)",
-            "example": "kubek_bot"
+            "example": "blockharbor_bot"
           },
           "error": {
             "type": "string",
@@ -10884,7 +10884,7 @@
           },
           "userId": {
             "type": "string",
-            "description": "Kubek user id"
+            "description": "BlockHarbor user id"
           },
           "username": {
             "type": "string",
@@ -10935,7 +10935,7 @@
           },
           "accountName": {
             "type": "string",
-            "description": "Kubek account username",
+            "description": "BlockHarbor account username",
             "example": "admin"
           }
         },
@@ -10995,7 +10995,7 @@
           "blueprintId": {
             "type": "string",
             "description": "Blueprint id",
-            "example": "com.kubek.paper"
+            "example": "com.blockharbor.paper"
           },
           "blueprintVersion": {
             "type": "string",
@@ -11037,7 +11037,7 @@
           },
           "blueprintId": {
             "type": "string",
-            "example": "com.kubek.paper"
+            "example": "com.blockharbor.paper"
           },
           "variables": {
             "type": "object",
@@ -11271,7 +11271,7 @@
           "blueprintId": {
             "type": "string",
             "description": "Target blueprint (core) id to switch to",
-            "example": "com.kubek.purpur"
+            "example": "com.blockharbor.purpur"
           },
           "version": {
             "type": "string",
@@ -11363,7 +11363,7 @@
           "id": {
             "type": "string",
             "description": "Blueprint id",
-            "example": "com.kubek.paper"
+            "example": "com.blockharbor.paper"
           },
           "name": {
             "type": "string",
@@ -11457,7 +11457,7 @@
           "id": {
             "type": "string",
             "description": "Blueprint id",
-            "example": "com.kubek.paper"
+            "example": "com.blockharbor.paper"
           },
           "name": {
             "type": "string",
@@ -11647,7 +11647,7 @@
           "otpauthUrl": {
             "type": "string",
             "description": "otpauth:// provisioning URI",
-            "example": "otpauth://totp/Kubek:admin?secret=..."
+            "example": "otpauth://totp/BlockHarbor:admin?secret=..."
           },
           "qrDataUrl": {
             "type": "string",
@@ -11988,7 +11988,7 @@
           "hostname": {
             "type": "string",
             "description": "System hostname",
-            "example": "kubek-server"
+            "example": "blockharbor-server"
           },
           "platform": {
             "type": "string",

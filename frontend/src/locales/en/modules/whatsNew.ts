@@ -1,7 +1,7 @@
 import type { TranslationDictionary } from "../../../locales/types";
 
 export const whatsNewTranslations: TranslationDictionary = {
-  title: "Kubek updated",
+  title: "BlockHarbor updated",
   subtitle: "Here's what's new in this version",
   gotIt: "Got it",
   fullChangelog: "Full changelog on GitHub",
