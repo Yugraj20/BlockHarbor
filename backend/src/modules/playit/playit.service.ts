@@ -107,6 +107,10 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
       this.startAgent().catch((err) => {
         this.logger.warn(`Could not auto-start Playit agent: ${getErrorMessage(err)}`);
       });
+      // Ensure all registered tunnels have valid local_port and local_ip routing
+      this.autoHealTunnels(secret).catch((err) => {
+        this.logger.warn(`Could not auto-heal remote tunnels: ${getErrorMessage(err)}`);
+      });
     } else {
       this.isAuthenticated = false;
       this.initiateClaimFlow().catch((err) => {
@@ -961,6 +965,34 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
       }
       newTunnelId = createJson.data.id;
       this.logger.log(`Created tunnel ${newTunnelId} on Playit.gg API for server ${server.name}`);
+
+      // 2b. Explicitly bind local_port and local_ip on Playit cloud so agent forwards traffic
+      try {
+        const configResp = await fetch("https://api.playit.gg/v1/tunnels/config", {
+          method: "POST",
+          headers: {
+            Authorization: `agent-key ${secret}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            tunnel_id: newTunnelId,
+            new_config: {
+              fields: [
+                { name: "local_ip", value: localIp || "127.0.0.1" },
+                { name: "local_port", value: String(localPort || 25565) },
+              ],
+            },
+          }),
+        });
+        const configJson = (await configResp.json()) as any;
+        if (configJson.status === "success") {
+          this.logger.log(`Bound tunnel ${newTunnelId} to local target ${localIp}:${localPort}`);
+        } else {
+          this.logger.warn(`Could not set local_port on tunnel: ${JSON.stringify(configJson)}`);
+        }
+      } catch (cfgErr) {
+        this.logger.warn(`Failed to configure local_port on tunnel: ${getErrorMessage(cfgErr)}`);
+      }
     } catch (createErr) {
       this.logger.error(`Failed to create tunnel on Playit.gg API: ${getErrorMessage(createErr)}`);
       throw new BadRequestException(`Failed to create tunnel on Playit.gg: ${getErrorMessage(createErr)}`);
@@ -1049,5 +1081,53 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
     }
 
     return serverId ? this.tunnelsRepo.findByServerId(serverId) : this.tunnelsRepo.findAll();
+  }
+
+  /**
+   * Validates and auto-repairs any remote Playit tunnels that lack local_port bindings
+   */
+  async autoHealTunnels(secret: string): Promise<void> {
+    try {
+      const resp = await fetch("https://api.playit.gg/v1/tunnels/list", {
+        method: "POST",
+        headers: {
+          Authorization: `agent-key ${secret}`,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      });
+      const json = (await resp.json()) as any;
+      if (json.status !== "success" || !Array.isArray(json.data?.tunnels)) return;
+
+      for (const t of json.data.tunnels) {
+        const fields = t.origin?.details?.config_data?.fields;
+        const hasPort = Array.isArray(fields) && fields.some((f: any) => f.name === "local_port" && f.value);
+        if (!hasPort) {
+          const localTunnel = this.tunnelsRepo.findById(t.id);
+          const targetPort = localTunnel?.localPort || 25565;
+          const targetIp = localTunnel?.localIp || "127.0.0.1";
+
+          await fetch("https://api.playit.gg/v1/tunnels/config", {
+            method: "POST",
+            headers: {
+              Authorization: `agent-key ${secret}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              tunnel_id: t.id,
+              new_config: {
+                fields: [
+                  { name: "local_ip", value: targetIp },
+                  { name: "local_port", value: String(targetPort) },
+                ],
+              },
+            }),
+          });
+          this.logger.log(`Auto-healed tunnel ${t.id}: routed to ${targetIp}:${targetPort}`);
+        }
+      }
+    } catch (err) {
+      this.logger.warn(`Auto-heal tunnels error: ${getErrorMessage(err)}`);
+    }
   }
 }
