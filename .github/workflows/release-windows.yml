@@ -2,8 +2,6 @@ name: Build & Release BlockHarbor (Windows)
 
 on:
   push:
-    branches:
-      - "main"
     tags:
       - "v*"
   workflow_dispatch:

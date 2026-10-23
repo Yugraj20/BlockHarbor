@@ -4,7 +4,10 @@
   "private": true,
   "author": "BlockHarbor Team",
   "scripts": {
-    "build": "bun ./scripts/build.ts"
+    "build": "bun ./scripts/build.ts",
+    "build:local": "powershell -ExecutionPolicy Bypass -File ./scripts/build-and-release.ps1",
+    "release:local": "powershell -ExecutionPolicy Bypass -File ./scripts/build-and-release.ps1 -PublishTag v4.0.3",
+    "upload:release": "node ./scripts/upload-release-assets.js"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
