@@ -312,13 +312,15 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
    * Retrieves live status of the Playit agent
    */
   getAgentStatus(): IPlayitAgentStatus {
-    const installed = !!this.discoverAgentPath();
+    const installed = !!(this.agentPath || this.discoverAgentPath());
     const running = this.agentProcess !== null && !this.agentProcess.killed;
     const hasSecret = !!this.loadConfiguredSecret();
 
     let state: PlayitAgentState = this.agentState;
     if (running) {
       state = "running";
+    } else if (this.claimUrl || this.agentState === "needs_claim") {
+      state = "needs_claim";
     } else if (!installed) {
       state = "not_installed";
     } else if (!hasSecret) {

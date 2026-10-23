@@ -61,6 +61,7 @@ describe("PlayitService", () => {
 
     it("should report claim URL if stdout produces a claim link", () => {
       // Simulate stdout claim detection
+      (service as any).agentPath = "mock/playit.exe";
       (service as any).handleAgentOutput("Visit https://playit.gg/claim/abc123xyz to link your agent");
       const status = service.getAgentStatus();
       expect(status.claimUrl).toBe("https://playit.gg/claim/abc123xyz");

@@ -73,6 +73,7 @@ jobs:
         run: |
           cd backend
           npm run build
+          mkdir -p ./dist/shared
           cp ../shared/vfs.js ./dist/shared/vfs.js
 
       - name: Compile Standalone Backend Executable

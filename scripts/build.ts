@@ -195,9 +195,13 @@ async function main() {
 
   // Copy vfs to backend dist (needed for both backend build and binary compilation)
   if (existsSync(path.join(sharedDir, "vfs.js"))) {
+    const destDir = path.join(backendDir, "dist", "shared");
+    if (!existsSync(destDir)) {
+      mkdirSync(destDir, { recursive: true });
+    }
     cpSync(
       path.join(sharedDir, "vfs.js"),
-      path.join(backendDir, "dist", "shared", "vfs.js"),
+      path.join(destDir, "vfs.js"),
       { force: true },
     );
   }
