@@ -28,12 +28,12 @@ const SideBar = () => {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 h-screen w-full border-r border-sidebar-border/60 bg-sidebar transition-transform duration-300 will-change-transform md:static md:w-auto",
+          "fixed inset-y-0 left-0 z-40 h-screen w-full overflow-hidden border-r border-sidebar-border/60 bg-sidebar transition-transform duration-300 will-change-transform md:static md:w-auto",
           "transform md:transform-none",
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
-        <div className="flex h-full w-full flex-col pt-3 md:w-full">
+        <div className="flex h-full w-full min-h-0 flex-col pt-3 md:w-full">
           {/* Logo + command palette launcher */}
           <div className="flex h-16 w-full shrink-0 items-center justify-between px-5">
             <LogoV2 size={"lg"} />
@@ -64,7 +64,15 @@ const SideBar = () => {
           <Navigation />
 
           {/* Resource Usage */}
-          <div className="shrink-0 animate-in space-y-2.5 border-t border-sidebar-border/60 p-3 fade-in slide-in-from-bottom-2">
+          <div
+            className="shrink-0 animate-in space-y-2.5 border-t border-sidebar-border/60 bg-sidebar p-3 fade-in slide-in-from-bottom-2"
+            onWheel={(e) => {
+              const nav = document.querySelector("nav");
+              if (nav) {
+                nav.scrollTop += e.deltaY;
+              }
+            }}
+          >
             <ResourcesUsage />
 
             <div className="flex items-center justify-between gap-2">

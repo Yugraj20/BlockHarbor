@@ -28,13 +28,13 @@ export const AdminNavigationSection = ({
   if (items.length === 0) return null;
 
   return (
-    <div className="col-span-3 md:contents">
+    <div className="col-span-3 w-full shrink-0 md:flex md:flex-col">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         className={cn(
-          "group flex w-full items-center gap-2 rounded-lg px-3 text-muted-foreground transition-colors duration-200 hover:text-foreground",
+          "group flex w-full shrink-0 items-center gap-2 rounded-lg px-3 text-muted-foreground transition-colors duration-200 hover:text-foreground",
           "mt-2 h-9 md:mt-3"
         )}
       >
@@ -53,7 +53,7 @@ export const AdminNavigationSection = ({
         {open && (
           <motion.div
             key="admin-items"
-            className="overflow-hidden"
+            className="w-full shrink-0 overflow-hidden"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}

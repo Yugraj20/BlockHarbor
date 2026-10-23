@@ -121,7 +121,7 @@ const Navigation = () => {
   if (!user) {
     return (
       <nav
-        className="grid min-h-0 flex-1 scrollbar-thin grid-cols-3 content-start gap-2 overflow-y-auto p-3 md:flex md:flex-col md:gap-0 md:space-y-1"
+        className="grid min-h-0 flex-1 scrollbar-thin grid-cols-3 content-start gap-2 overflow-y-auto p-3 pb-8 md:flex md:flex-col md:gap-0 md:space-y-1"
         aria-busy="true"
       >
         {allNavigation.map((item) => (
@@ -142,7 +142,7 @@ const Navigation = () => {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={NAV_TRANSITION}
-      className="grid min-h-0 flex-1 scrollbar-thin auto-rows-max grid-cols-3 gap-2 overflow-y-auto p-3 md:flex md:flex-col md:gap-0 md:space-y-1"
+      className="grid min-h-0 flex-1 scrollbar-thin auto-rows-max grid-cols-3 gap-2 overflow-y-auto p-3 pb-8 md:flex md:flex-col md:gap-0 md:space-y-1"
     >
       {filteredNavigation.map(renderNavItem)}
 
