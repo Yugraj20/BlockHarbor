@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="header.png" alt="BlockHarbor" width="700" style="border-radius: 12px; margin-bottom: 16px;" />
+
 # ⚓ BlockHarbor
 
 **A Polished Native Windows Application & Management Platform for Minecraft Servers**

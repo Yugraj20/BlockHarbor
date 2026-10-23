@@ -25,6 +25,8 @@ OutputDir=..\dist\release
 OutputBaseFilename=BlockHarbor-Setup-x64
 SetupIconFile=..\desktop\app.ico
 UninstallDisplayIcon={app}\app.ico
+WizardImageFile=wizard-large.bmp
+WizardSmallImageFile=wizard-small.bmp
 Compression=lzma2/ultra64
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible
@@ -46,6 +48,7 @@ Name: "startwithwindows"; Description: "Launch BlockHarbor automatically when Wi
 ; Desktop Shell, Backend Executables, Libraries, and Runtimes
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\desktop\app.ico"; DestDir: "{app}"; DestName: "app.ico"; Flags: ignoreversion
+Source: "..\desktop\icon.png"; DestDir: "{app}"; DestName: "icon.png"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\app.ico"

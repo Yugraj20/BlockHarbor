@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="BlockHarbor - Native Minecraft Server Platform"
+        Icon="app.ico"
         Height="860" Width="1380"
         MinHeight="650" MinWidth="950"
         WindowStartupLocation="CenterScreen"
@@ -15,25 +16,17 @@
         <!-- Startup / Loading Overlay -->
         <Grid Name="LoadingOverlay" Background="{StaticResource BgDarkBrush}" Visibility="Visible">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <!-- Voxel Beacon / Logo Graphic -->
-                <Border Width="64" Height="64" CornerRadius="16" Background="{StaticResource SurfaceDarkBrush}"
-                        BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1.5"
-                        HorizontalAlignment="Center" Margin="0,0,0,24">
-                    <Grid>
-                        <Rectangle Width="24" Height="24" RadiusX="4" RadiusY="4"
-                                   Fill="{StaticResource EmeraldAccentBrush}">
-                            <Rectangle.RenderTransform>
-                                <RotateTransform Angle="45" CenterX="12" CenterY="12" />
-                            </Rectangle.RenderTransform>
-                        </Rectangle>
-                        <Ellipse Width="8" Height="8" Fill="White" />
-                    </Grid>
+                <!-- BlockHarbor Logo Graphic -->
+                <Border Width="96" Height="96" CornerRadius="20" Background="#050810"
+                        BorderBrush="#1e293b" BorderThickness="1.5"
+                        HorizontalAlignment="Center" Margin="0,0,0,20" ClipToBounds="True">
+                    <Image Source="icon.png" Width="96" Height="96" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
                 </Border>
 
                 <!-- Brand Name -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
                     <TextBlock Text="Block" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                    <TextBlock Text="Harbor" FontSize="26" FontWeight="ExtraBold" Foreground="{StaticResource EmeraldAccentBrush}" />
+                    <TextBlock Text="Harbor" FontSize="26" FontWeight="ExtraBold" Foreground="#38bdf8" />
                 </StackPanel>
 
                 <!-- Status Text -->
@@ -44,7 +37,7 @@
                 <!-- Progress Ring / Bar -->
                 <ProgressBar Name="LoadingProgressBar" IsIndeterminate="True"
                              Width="220" Height="4"
-                             Foreground="{StaticResource EmeraldAccentBrush}"
+                             Foreground="#38bdf8"
                              Background="{StaticResource BorderDarkBrush}"
                              BorderThickness="0" />
 
