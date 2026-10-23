@@ -23,14 +23,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="app.ico" />
-    <Resource Include="icon.png" />
-    <None Update="app.ico">
+    <Resource Include="app.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="icon.png">
+    </Resource>
+    <Resource Include="icon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </Resource>
   </ItemGroup>
 
 </Project>

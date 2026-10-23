@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="BlockHarbor - Native Minecraft Server Platform"
-        Icon="app.ico"
         Height="860" Width="1380"
         MinHeight="650" MinWidth="950"
         WindowStartupLocation="CenterScreen"
@@ -20,7 +19,7 @@
                 <Border Width="96" Height="96" CornerRadius="20" Background="#050810"
                         BorderBrush="#1e293b" BorderThickness="1.5"
                         HorizontalAlignment="Center" Margin="0,0,0,20" ClipToBounds="True">
-                    <Image Source="icon.png" Width="96" Height="96" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                    <Image x:Name="SplashImage" Source="icon.png" Width="96" Height="96" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
                 </Border>
 
                 <!-- Brand Name -->

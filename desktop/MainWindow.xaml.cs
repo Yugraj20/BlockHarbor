@@ -41,10 +41,27 @@ namespace BlockHarbor.Desktop
                 {
                     Icon = System.Windows.Media.Imaging.BitmapFrame.Create(new Uri(iconPath, UriKind.Absolute));
                 }
+                else
+                {
+                    Icon = System.Windows.Media.Imaging.BitmapFrame.Create(new Uri("pack://application:,,,/app.ico"));
+                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Failed to set window icon: {ex.Message}");
+            }
+
+            try
+            {
+                var splashPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.png");
+                if (File.Exists(splashPath))
+                {
+                    SplashImage.Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(splashPath, UriKind.Absolute));
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to set splash image: {ex.Message}");
             }
 
             InitializeSystemTray();
