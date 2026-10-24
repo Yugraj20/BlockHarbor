@@ -17,7 +17,10 @@ export const InformationTab = ({
 }: InformationTabProps) => {
   const { t } = useTranslation("modules.serverSettings");
   const getValue = (key: string, defaultValue: string = "") => {
-    return settings[key] || defaultValue;
+    const val = settings[key];
+    return val !== undefined && val !== null && String(val) !== ""
+      ? String(val)
+      : defaultValue;
   };
 
   return (
@@ -80,9 +83,27 @@ export const InformationTab = ({
               </p>
             </div>
             <Switch
-              checked={getValue("online-mode") === "true"}
+              checked={getValue("online-mode", "false") === "true"}
+              onCheckedChange={(checked) => {
+                onUpdateSetting("online-mode", checked.toString());
+                if (!checked) {
+                  onUpdateSetting("enforce-secure-profile", "false");
+                }
+              }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Enforce Mojang Secure Profile</Label>
+              <p className="text-sm text-muted-foreground">
+                Require Mojang-signed chat keys. Must be disabled for cracked / offline-mode players to join.
+              </p>
+            </div>
+            <Switch
+              checked={getValue("enforce-secure-profile", "false") === "true"}
               onCheckedChange={(checked) =>
-                onUpdateSetting("online-mode", checked.toString())
+                onUpdateSetting("enforce-secure-profile", checked.toString())
               }
             />
           </div>
@@ -95,7 +116,7 @@ export const InformationTab = ({
               </p>
             </div>
             <Switch
-              checked={getValue("white-list") === "true"}
+              checked={getValue("white-list", "false") === "true"}
               onCheckedChange={(checked) =>
                 onUpdateSetting("white-list", checked.toString())
               }

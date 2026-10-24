@@ -2,7 +2,7 @@
 ; Native Windows Minecraft Server Manager
 
 #define MyAppName "BlockHarbor"
-#define MyAppVersion "4.0.2"
+#define MyAppVersion "4.0.3"
 #define MyAppPublisher "BlockHarbor Team"
 #define MyAppURL "https://github.com/Yugraj20/BlockHarbor"
 #define MyAppExeName "BlockHarbor.exe"

@@ -10,7 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { ChevronDown, Globe, House, Network } from "lucide-react";
+import { ChevronDown, Globe, House, Network, Radio } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { AddressMenuItem } from "./AddressMenuItem";
 import { InfoCard } from "./InfoCard";
@@ -22,27 +22,39 @@ interface AddressCardProps {
 export const AddressCard: React.FC<AddressCardProps> = ({ serverId }) => {
   const { t } = useTranslation("modules.console");
   const tAddress = useTranslation("modules.sidebar.serverAddress").t;
-  const { publicEntry, localEntries, primary, loading } =
+  const { playitEntries, publicEntry, localEntries, primary, loading } =
     useServerAddress(serverId);
 
-  const [activeHost, setActiveHost] = useState<string | null>(null);
+  const [activeFull, setActiveFull] = useState<string | null>(null);
+
+  const allEntries = useMemo(() => {
+    const list: ServerAddressEntry[] = [...playitEntries];
+    if (publicEntry) list.push(publicEntry);
+    list.push(...localEntries);
+    return list;
+  }, [playitEntries, publicEntry, localEntries]);
 
   const activeEntry = useMemo<ServerAddressEntry | null>(() => {
-    if (activeHost) {
-      if (publicEntry?.host === activeHost) return publicEntry;
-      const match = localEntries.find((e) => e.host === activeHost);
+    if (activeFull) {
+      const match = allEntries.find((e) => e.full === activeFull);
       if (match) return match;
     }
     return primary;
-  }, [activeHost, publicEntry, localEntries, primary]);
+  }, [activeFull, allEntries, primary]);
 
-  const hasMultiple = !!publicEntry && localEntries.length > 0;
+  const hasMultiple = allEntries.length > 1;
   const ModeIcon =
-    activeEntry?.label === "public"
-      ? Globe
-      : activeEntry?.label === "local"
-        ? House
-        : Network;
+    activeEntry?.label === "playit"
+      ? Radio
+      : activeEntry?.label === "public"
+        ? Globe
+        : activeEntry?.label === "local"
+          ? House
+          : Network;
+  const modeLabel =
+    activeEntry?.label === "playit"
+      ? "Playit Tunnel"
+      : tAddress(`mode.${activeEntry?.label || "public"}`);
 
   const valueNode = (
     <div className="flex min-w-0 items-center gap-1.5">
@@ -86,8 +98,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({ serverId }) => {
             </div>
             <div className="min-w-0 flex-1 text-left">
               <div className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
-                {t("console.cards.address")} ·{" "}
-                {tAddress(`mode.${activeEntry?.label || "public"}`)}
+                {t("console.cards.address")} · {modeLabel}
               </div>
               <div className="flex items-center gap-1.5 truncate text-sm font-semibold">
                 <span className="truncate">
@@ -98,13 +109,23 @@ export const AddressCard: React.FC<AddressCardProps> = ({ serverId }) => {
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="mt-1.5 w-80">
+            {playitEntries.map((entry, idx) => (
+              <AddressMenuItem
+                key={`playit-${entry.full}-${idx}`}
+                icon={Radio}
+                title={entry.name ? `Playit · ${entry.name}` : `Playit Tunnel #${idx + 1}`}
+                entry={entry}
+                active={activeEntry?.full === entry.full}
+                onSelect={() => setActiveFull(entry.full)}
+              />
+            ))}
             {publicEntry && (
               <AddressMenuItem
                 icon={Globe}
                 title={tAddress("mode.public")}
                 entry={publicEntry}
-                active={activeEntry?.host === publicEntry.host}
-                onSelect={() => setActiveHost(publicEntry.host)}
+                active={activeEntry?.full === publicEntry.full}
+                onSelect={() => setActiveFull(publicEntry.full)}
               />
             )}
             {localEntries.map((entry, idx) => (
@@ -117,8 +138,8 @@ export const AddressCard: React.FC<AddressCardProps> = ({ serverId }) => {
                     : `${tAddress("mode.local")} #${idx + 1}`
                 }
                 entry={entry}
-                active={activeEntry?.host === entry.host}
-                onSelect={() => setActiveHost(entry.host)}
+                active={activeEntry?.full === entry.full}
+                onSelect={() => setActiveFull(entry.full)}
               />
             ))}
           </DropdownMenuContent>

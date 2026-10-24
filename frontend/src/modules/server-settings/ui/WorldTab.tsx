@@ -14,7 +14,10 @@ interface WorldSettingsProps {
 export const WorldTab = ({ settings, onUpdateSetting }: WorldSettingsProps) => {
   const { t } = useTranslation("modules.serverSettings");
   const getValue = (key: string, defaultValue: string = "") => {
-    return settings[key] || defaultValue;
+    const val = settings[key];
+    return val !== undefined && val !== null && String(val) !== ""
+      ? String(val)
+      : defaultValue;
   };
 
   return (

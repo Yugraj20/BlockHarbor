@@ -53,7 +53,8 @@ Copy-Item "$RootDir\desktop\icon.png" "$RootDir\dist\desktop\icon.png" -Force
 Write-Host "`n[4/5] Compiling Inno Setup Installer..." -ForegroundColor Yellow
 $iscc = "C:\Program Files (x86)\Inno Setup 6\iscc.exe"
 if (-not (Test-Path $iscc)) {
-    $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
+    $cmd = Get-Command iscc.exe -ErrorAction SilentlyContinue
+    if ($cmd) { $iscc = $cmd.Source }
 }
 if ($iscc) {
     & $iscc "$RootDir\scripts\installer.iss"

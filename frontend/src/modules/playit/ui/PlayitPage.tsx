@@ -625,13 +625,41 @@ export function PlayitPage() {
                         </td>
                         <td className="py-3.5 px-4">
                           {t.publicAddress ? (
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-emerald-400 font-medium">
-                                {t.publicAddress}{t.publicPort ? `:${t.publicPort}` : ""}
-                              </span>
-                              <CopyButton
-                                text={`${t.publicAddress}${t.publicPort ? `:${t.publicPort}` : ""}`}
-                              />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-emerald-400 font-medium">
+                                  {t.publicAddress}{t.publicPort ? `:${t.publicPort}` : ""}
+                                </span>
+                                <CopyButton
+                                  value={`${t.publicAddress}${t.publicPort ? `:${t.publicPort}` : ""}`}
+                                />
+                              </div>
+                              {t.publicPort && (
+                                <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
+                                  <span>Domain (SRV):</span>
+                                  <span className="font-mono text-zinc-300">{t.publicAddress}</span>
+                                  <CopyButton
+                                    value={t.publicAddress}
+                                    className="p-0.5"
+                                    iconClassName="h-3 w-3"
+                                  />
+                                </div>
+                              )}
+                              {testRes && (
+                                <div className={`text-[11px] flex items-center gap-1 ${testRes.reachable ? "text-emerald-400" : "text-red-400"}`}>
+                                  {testRes.reachable ? (
+                                    <>
+                                      <CheckCircle2 className="w-3 h-3 shrink-0" />
+                                      <span>Reachable ({testRes.latencyMs}ms)</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <AlertCircle className="w-3 h-3 shrink-0" />
+                                      <span>{testRes.error || "Unreachable"}</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <span className="text-zinc-500 italic">Pending mapping</span>

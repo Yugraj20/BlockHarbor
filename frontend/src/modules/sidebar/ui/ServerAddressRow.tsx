@@ -13,33 +13,45 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { ChevronDown, Globe, House, Network } from "lucide-react";
+import { ChevronDown, Globe, House, Network, Radio } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
 const ServerAddressRow = () => {
   const { selectedServer } = useServerStore();
-  const { publicEntry, localEntries, primary, loading } = useServerAddress(
-    selectedServer?.id
-  );
+  const { playitEntries, publicEntry, localEntries, primary, loading } =
+    useServerAddress(selectedServer?.id);
   const { t } = useTranslation("modules.sidebar.serverAddress");
 
-  const [activeHost, setActiveHost] = useState<string | null>(null);
+  const [activeFull, setActiveFull] = useState<string | null>(null);
+
+  const allEntries = useMemo(() => {
+    const list: ServerAddressEntry[] = [...playitEntries];
+    if (publicEntry) list.push(publicEntry);
+    list.push(...localEntries);
+    return list;
+  }, [playitEntries, publicEntry, localEntries]);
 
   const activeEntry = useMemo<ServerAddressEntry | null>(() => {
-    if (activeHost) {
-      if (publicEntry?.host === activeHost) return publicEntry;
-      const match = localEntries.find((e) => e.host === activeHost);
+    if (activeFull) {
+      const match = allEntries.find((e) => e.full === activeFull);
       if (match) return match;
     }
     return primary;
-  }, [activeHost, publicEntry, localEntries, primary]);
+  }, [activeFull, allEntries, primary]);
 
   if (!selectedServer) return null;
 
-  const hasMultiple = !!publicEntry && localEntries.length > 0;
-  const ModeIcon = activeEntry?.label === "public" ? Globe : House;
+  const hasMultiple = allEntries.length > 1;
+  const ModeIcon =
+    activeEntry?.label === "playit"
+      ? Radio
+      : activeEntry?.label === "public"
+        ? Globe
+        : House;
   const labelText = activeEntry
-    ? t(`mode.${activeEntry.label}`, activeEntry.label)
+    ? activeEntry.label === "playit"
+      ? "Playit Tunnel"
+      : t(`mode.${activeEntry.label}`, activeEntry.label)
     : loading
       ? t("loading")
       : t("unavailable");
@@ -103,13 +115,23 @@ const ServerAddressRow = () => {
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="mt-1.5 w-[305px]">
+          {playitEntries.map((entry, idx) => (
+            <AddressMenuItem
+              key={`playit-${entry.full}-${idx}`}
+              icon={Radio}
+              title={entry.name ? `Playit · ${entry.name}` : `Playit Tunnel #${idx + 1}`}
+              entry={entry}
+              active={activeEntry?.full === entry.full}
+              onSelect={() => setActiveFull(entry.full)}
+            />
+          ))}
           {publicEntry && (
             <AddressMenuItem
               icon={Globe}
               title={t("mode.public")}
               entry={publicEntry}
-              active={activeEntry?.host === publicEntry.host}
-              onSelect={() => setActiveHost(publicEntry.host)}
+              active={activeEntry?.full === publicEntry.full}
+              onSelect={() => setActiveFull(publicEntry.full)}
             />
           )}
           {localEntries.map((entry, idx) => (
@@ -120,8 +142,8 @@ const ServerAddressRow = () => {
                 idx === 0 ? t("mode.local") : `${t("mode.local")} #${idx + 1}`
               }
               entry={entry}
-              active={activeEntry?.host === entry.host}
-              onSelect={() => setActiveHost(entry.host)}
+              active={activeEntry?.full === entry.full}
+              onSelect={() => setActiveFull(entry.full)}
             />
           ))}
         </DropdownMenuContent>

@@ -19,7 +19,7 @@ import type {
   PlayitAgentState,
 } from "@shared/types/playit.types";
 import { ServerStatus } from "@shared/types/server/server.types";
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, execSync, spawn } from "child_process";
 import * as crypto from "crypto";
 import * as dns from "dns";
 import * as fs from "fs";
@@ -51,6 +51,8 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
   private isAuthenticated = false;
   private agentState: PlayitAgentState = "not_installed";
   private lastError: string | null = null;
+  private shouldKeepRunning = false;
+  private restartTimer: NodeJS.Timeout | null = null;
   private readonly logBuffer: string[] = [];
   private readonly MAX_LOG_LINES = 100;
 
@@ -107,10 +109,12 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
       this.startAgent().catch((err) => {
         this.logger.warn(`Could not auto-start Playit agent: ${getErrorMessage(err)}`);
       });
-      // Ensure all registered tunnels have valid local_port and local_ip routing
-      this.autoHealTunnels(secret).catch((err) => {
-        this.logger.warn(`Could not auto-heal remote tunnels: ${getErrorMessage(err)}`);
-      });
+      // Ensure all registered tunnels have valid local_port and local_ip routing and sync into DB
+      this.autoHealTunnels(secret)
+        .then(() => this.syncAccountTunnels())
+        .catch((err) => {
+          this.logger.warn(`Could not auto-heal/sync remote tunnels: ${getErrorMessage(err)}`);
+        });
     } else {
       this.isAuthenticated = false;
       this.initiateClaimFlow().catch((err) => {
@@ -120,6 +124,11 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
+    this.shouldKeepRunning = false;
+    if (this.restartTimer) {
+      clearTimeout(this.restartTimer);
+      this.restartTimer = null;
+    }
     if (this.claimPollTimer) {
       clearInterval(this.claimPollTimer);
       this.claimPollTimer = null;
@@ -389,7 +398,13 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
    */
   async startAgent(): Promise<IPlayitAgentStatus> {
     if (this.agentProcess && !this.agentProcess.killed) {
+      this.shouldKeepRunning = true;
       return this.getAgentStatus();
+    }
+
+    if (this.restartTimer) {
+      clearTimeout(this.restartTimer);
+      this.restartTimer = null;
     }
 
     const agentBinary = this.discoverAgentPath();
@@ -406,6 +421,21 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
       return this.getAgentStatus();
     }
 
+    // Terminate any orphaned playit.exe instances from previous runs so they do not
+    // conflict over the same agent secret key (which causes SessionNotSetup / exit code 4)
+    if (process.platform === "win32") {
+      try {
+        execSync("taskkill /F /IM playit.exe /T", { stdio: "ignore", windowsHide: true });
+      } catch {}
+      try {
+        execSync("taskkill /F /IM playit-windows-x86_64.exe /T", {
+          stdio: "ignore",
+          windowsHide: true,
+        });
+      } catch {}
+    }
+
+    this.shouldKeepRunning = true;
     this.agentState = "starting";
     this.lastError = null;
 
@@ -434,7 +464,21 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
         this.logger.log(`Playit agent exited with code ${code}, signal ${signal}`);
         this.agentProcess = null;
         this.agentPid = null;
-        if (code !== 0 && code !== null) {
+        if (this.shouldKeepRunning) {
+          this.agentState = "starting";
+          this.logger.warn(
+            `Playit agent exited (code=${code}); auto-restarting in 3 seconds...`,
+          );
+          if (this.restartTimer) clearTimeout(this.restartTimer);
+          this.restartTimer = setTimeout(() => {
+            this.restartTimer = null;
+            if (this.shouldKeepRunning) {
+              this.startAgent().catch((e) =>
+                this.logger.warn(`Playit auto-restart failed: ${getErrorMessage(e)}`),
+              );
+            }
+          }, 3000);
+        } else if (code !== 0 && code !== null) {
           this.agentState = "error";
           this.lastError = `Agent exited unexpectedly with code ${code}`;
         } else {
@@ -461,6 +505,12 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
    * Stops the managed Playit agent process
    */
   async stopAgent(): Promise<IPlayitAgentStatus> {
+    this.shouldKeepRunning = false;
+    if (this.restartTimer) {
+      clearTimeout(this.restartTimer);
+      this.restartTimer = null;
+    }
+
     if (!this.agentProcess || !this.agentPid) {
       this.agentState = this.agentPath ? "stopped" : "not_installed";
       return this.getAgentStatus();
@@ -566,13 +616,24 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
     latencyMs?: number;
     error?: string;
   }> {
+    const cleanHost = host.includes(":") ? host.split(":")[0].trim() : host.trim();
+    const targetPort =
+      port ||
+      (host.includes(":") ? parseInt(host.split(":")[1], 10) : 25565) ||
+      25565;
+
     try {
-      const lookup = await dns.promises.lookup(host);
+      let lookup: { address: string; family: number };
+      try {
+        lookup = await dns.promises.lookup(cleanHost, { family: 4 });
+      } catch {
+        lookup = await dns.promises.lookup(cleanHost);
+      }
       const start = Date.now();
 
       return await new Promise((resolve) => {
         const socket = new net.Socket();
-        socket.setTimeout(3500);
+        socket.setTimeout(4000);
 
         socket.on("connect", () => {
           const latencyMs = Date.now() - start;
@@ -591,7 +652,7 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
             dnsOk: true,
             resolvedIp: lookup.address,
             reachable: false,
-            error: "Endpoint reachable test timed out after 3.5s",
+            error: "Endpoint reachable test timed out after 4s",
           });
         });
 
@@ -605,13 +666,13 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
           });
         });
 
-        socket.connect(port, lookup.address);
+        socket.connect(targetPort, lookup.address);
       });
     } catch (dnsErr) {
       return {
         dnsOk: false,
         reachable: false,
-        error: `DNS lookup failed for ${host}: ${getErrorMessage(dnsErr)}`,
+        error: `DNS lookup failed for ${cleanHost}: ${getErrorMessage(dnsErr)}`,
       };
     }
   }
@@ -1053,18 +1114,36 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
    * Syncs tunnels from the user's remote Playit.gg account into BlockHarbor database
    */
   async syncAccountTunnels(serverId?: string): Promise<IPlayitTunnel[]> {
+    const secret = this.loadConfiguredSecret();
+    if (secret) {
+      await this.autoHealTunnels(secret).catch(() => {});
+    }
+
     const remote = await this.getRemoteTunnels();
     const existing = this.tunnelsRepo.findAll();
-    const synced: IPlayitTunnel[] = [];
+    const defaultServerId =
+      serverId ||
+      existing[0]?.serverId ||
+      this.serversRepo.findAll()[0]?.id;
 
     for (const r of remote) {
       const match = existing.find(
-        (e) => e.publicAddress === r.publicAddress && e.publicPort === r.publicPort,
+        (e) =>
+          (e.publicAddress === r.publicAddress && e.publicPort === r.publicPort) ||
+          (e.publicAddress === r.publicAddress && !e.publicPort),
       );
 
-      if (!match && serverId) {
-        const created = this.tunnelsRepo.create({
-          serverId,
+      if (match) {
+        if (match.status !== "active" || match.publicPort !== r.publicPort) {
+          this.tunnelsRepo.update(match.id, {
+            publicAddress: r.publicAddress,
+            publicPort: r.publicPort,
+            status: "active",
+          });
+        }
+      } else if (defaultServerId) {
+        this.tunnelsRepo.create({
+          serverId: defaultServerId,
           name: r.name,
           protocol: (r.portType === "udp" ? "udp" : "tcp") as any,
           localIp: "127.0.0.1",
@@ -1076,11 +1155,12 @@ export class PlayitService implements OnModuleInit, OnModuleDestroy {
           lastHealthCheck: Date.now(),
           healthDetails: "Imported from Playit.gg account",
         });
-        synced.push(created);
       }
     }
 
-    return serverId ? this.tunnelsRepo.findByServerId(serverId) : this.tunnelsRepo.findAll();
+    return serverId
+      ? this.tunnelsRepo.findByServerId(serverId)
+      : this.tunnelsRepo.findAll();
   }
 
   /**

@@ -1,6 +1,6 @@
 {
   "name": "blockharbor-backend",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "author": "BlockHarbor Team",
   "private": true,
   "scripts": {

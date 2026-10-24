@@ -1,21 +1,24 @@
 "use client";
 import { api } from "@/api";
+import type { PlayitTunnelConfig } from "@/api/playit/playit.api";
 import type { NetworkInfo } from "@/api/system-monitoring/system-monitoring.model";
 import { useEffect, useState } from "react";
 
 export interface ServerAddressEntry {
-  label: "public" | "local";
+  label: "playit" | "public" | "local";
   host: string;
   port: string | null;
   full: string;
+  name?: string;
 }
 
 export interface ServerAddressInfo {
   loading: boolean;
   port: string | null;
+  playitEntries: ServerAddressEntry[];
   publicEntry: ServerAddressEntry | null;
   localEntries: ServerAddressEntry[];
-  /** Convenience: first available entry (public preferred), or null */
+  /** Convenience: first available entry (Playit tunnel preferred), or null */
   primary: ServerAddressEntry | null;
 }
 
@@ -75,13 +78,17 @@ async function resolveNetwork(): Promise<NetworkInfo> {
 function buildEntry(
   label: ServerAddressEntry["label"],
   host: string,
-  port: string | null
+  port: string | null,
+  name?: string
 ): ServerAddressEntry {
+  const cleanHost = host.includes(":") ? host.split(":")[0] : host;
+  const effectivePort = port ?? (host.includes(":") ? host.split(":")[1] : null);
   return {
     label,
-    host,
-    port,
-    full: port ? `${host}:${port}` : host,
+    host: cleanHost,
+    port: effectivePort,
+    full: effectivePort ? `${cleanHost}:${effectivePort}` : cleanHost,
+    name,
   };
 }
 
@@ -92,6 +99,7 @@ export function useServerAddress(serverId?: string | null): ServerAddressInfo {
   const [network, setNetwork] = useState<NetworkInfo | null>(
     networkCache?.value ?? null
   );
+  const [playitTunnels, setPlayitTunnels] = useState<PlayitTunnelConfig[]>([]);
   const [loadingNetwork, setLoadingNetwork] = useState<boolean>(!networkCache);
   const [loadingPort, setLoadingPort] = useState<boolean>(
     !!serverId && !portCache.has(serverId)
@@ -110,6 +118,31 @@ export function useServerAddress(serverId?: string | null): ServerAddressInfo {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const fetchTunnels = async () => {
+      try {
+        let list = serverId
+          ? await api.playit.getTunnels(serverId)
+          : await api.playit.getTunnels();
+        if (serverId && (!list || list.length === 0)) {
+          list = await api.playit.getTunnels();
+        }
+        if (active && Array.isArray(list)) {
+          setPlayitTunnels(list.filter((t) => !!t.publicAddress));
+        }
+      } catch {
+        // ignore if Playit is not configured
+      }
+    };
+    fetchTunnels();
+    const timer = setInterval(fetchTunnels, 10000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [serverId]);
 
   useEffect(() => {
     if (!serverId) {
@@ -136,6 +169,17 @@ export function useServerAddress(serverId?: string | null): ServerAddressInfo {
     };
   }, [serverId]);
 
+  const playitEntries = playitTunnels
+    .filter((t) => !!t.publicAddress)
+    .map((t) =>
+      buildEntry(
+        "playit",
+        t.publicAddress!,
+        t.publicPort ? String(t.publicPort) : null,
+        t.name
+      )
+    );
+
   const publicEntry = network?.publicIp
     ? buildEntry("public", network.publicIp, port)
     : null;
@@ -144,11 +188,14 @@ export function useServerAddress(serverId?: string | null): ServerAddressInfo {
     buildEntry("local", ip, port)
   );
 
-  const primary = publicEntry || localEntries[0] || null;
+  // Prefer Playit tunnel address first so players get the working tunnel IP immediately
+  const primary =
+    playitEntries[0] || localEntries[0] || publicEntry || null;
 
   return {
     loading: loadingNetwork || loadingPort,
     port,
+    playitEntries,
     publicEntry,
     localEntries,
     primary,

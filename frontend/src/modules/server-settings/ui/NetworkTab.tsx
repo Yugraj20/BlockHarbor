@@ -16,7 +16,10 @@ export const NetworkTab = ({
 }: NetworkSettingsProps) => {
   const { t } = useTranslation("modules.serverSettings");
   const getValue = (key: string, defaultValue: string = "") => {
-    return settings[key] || defaultValue;
+    const val = settings[key];
+    return val !== undefined && val !== null && String(val) !== ""
+      ? String(val)
+      : defaultValue;
   };
 
   return (

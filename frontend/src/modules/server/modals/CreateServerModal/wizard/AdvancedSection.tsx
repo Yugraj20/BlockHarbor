@@ -31,7 +31,7 @@ export function AdvancedSection({
     formState: { errors },
   } = form;
 
-  const [useAikarFlags, setUseAikarFlags] = useState(false);
+  const [useAikarFlags, setUseAikarFlags] = useState(true);
   const [extraArguments, setExtraArguments] = useState<string[]>([]);
   const [newArg, setNewArg] = useState("");
 

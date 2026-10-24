@@ -1,4 +1,5 @@
 import type { KubekBlueprintManifest } from "@kubekpanel/blueprint-sdk";
+import { DEFAULT_JAVA_SERVER_PROPERTIES } from "./default-server-properties";
 
 export const folia = {
   manifestVersion: 1,
@@ -113,8 +114,7 @@ export const folia = {
       {
         type: "writeFile",
         path: "server.properties",
-        content:
-          "server-port={{SERVER_PORT}}\nquery.port={{SERVER_PORT}}\nenable-query=true\nonline-mode=false\nmotd=§f{{SERVER_NAME}}",
+        content: DEFAULT_JAVA_SERVER_PROPERTIES,
       },
     ],
   },

@@ -301,8 +301,19 @@ export class ServersService implements OnModuleInit {
     const server = this.serversRepo.findById(serverId);
     if (!server) throw new NotFoundException("Server not found");
 
+    const normalized: Record<string, string> = Object.fromEntries(
+      Object.entries(properties || {}).map(([k, v]) => [
+        k,
+        v !== undefined && v !== null ? String(v) : "",
+      ]),
+    );
+    if (normalized["online-mode"] === "false") {
+      normalized["enforce-secure-profile"] = "false";
+      normalized["prevent-proxy-connections"] = "false";
+    }
+
     const instance = this.ensureInstance(server);
-    const success = await instance.writeServerProperties(properties);
+    const success = await instance.writeServerProperties(normalized);
 
     if (!success) {
       throw new BadRequestException("Failed to write server properties");

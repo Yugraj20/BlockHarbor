@@ -4,7 +4,9 @@ import { Check, Copy } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 interface CopyButtonProps {
-  value: string;
+  value?: string;
+  text?: string;
+  label?: string;
   className?: string;
   iconClassName?: string;
   title?: string;
@@ -13,6 +15,8 @@ interface CopyButtonProps {
 
 export const CopyButton: React.FC<CopyButtonProps> = ({
   value,
+  text,
+  label,
   className,
   iconClassName,
   title,
@@ -20,6 +24,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const targetText = value ?? text ?? "";
 
   useEffect(() => {
     return () => {
@@ -31,8 +36,9 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
     (e: React.MouseEvent<HTMLButtonElement>) => {
       if (stopPropagation) e.stopPropagation();
       e.preventDefault();
+      if (!targetText) return;
       try {
-        navigator.clipboard?.writeText(value);
+        navigator.clipboard?.writeText(targetText);
         setCopied(true);
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => setCopied(false), 1200);
@@ -40,7 +46,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
         /* noop */
       }
     },
-    [value, stopPropagation],
+    [targetText, stopPropagation],
   );
 
   const Icon = copied ? Check : Copy;
@@ -48,10 +54,11 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
   return (
     <button
       type="button"
-      title={ title }
+      title={ title || (copied ? "Copied!" : "Copy") }
       onClick={ handleClick }
       className={ cn(
-        "inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+        "inline-flex items-center justify-center gap-1.5 rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+        label && "px-2.5 py-1.5 border border-border/60",
         className,
       ) }
     >
@@ -62,6 +69,11 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
           iconClassName,
         ) }
       />
+      {label && (
+        <span className={ cn("font-medium", copied && "text-emerald-400") }>
+          {copied ? "Copied!" : label}
+        </span>
+      )}
     </button>
   );
 };

@@ -67,8 +67,13 @@ export class InstallPipeline {
       }
     }
 
-    // Minecraft bootstrap: drop the default favicon when the blueprint targets minecraft
-    if (manifest.game === "minecraft") this.ensureDefaultIcon(dir);
+    // Minecraft bootstrap: drop the default favicon and ensure cracked/playable server.properties defaults
+    if (manifest.game === "minecraft") {
+      this.ensureDefaultIcon(dir);
+      if (!opts.skipExistingFiles) {
+        this.ensurePlayableServerProperties(dir, scope, manifest);
+      }
+    }
   }
 
   /** Install steps for docker mode, defaults to a single dockerPull of the profile image */
@@ -283,5 +288,94 @@ export class InstallPipeline {
     const iconPath = path.join(dir, "server-icon.png");
     if (fs.existsSync(iconPath)) return;
     fs.writeFileSync(iconPath, Buffer.from(Branding.Base64Icon, "base64"));
+  }
+
+  /**
+   * Ensure newly created Minecraft servers have playable, cracked-compatible defaults
+   * in server.properties (including Bedrock and custom blueprints).
+   */
+  private ensurePlayableServerProperties(
+    dir: string,
+    scope: ResolveScope,
+    manifest: LoadedBlueprint["manifest"],
+  ): void {
+    const spPath = path.join(dir, "server.properties");
+    const isBedrock = manifest.id.includes("bedrock");
+    const existingLines = fs.existsSync(spPath)
+      ? fs.readFileSync(spPath, "utf-8").split(/\r?\n/)
+      : [];
+
+    const map = new Map<string, string>();
+    for (const line of existingLines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq > 0) {
+        map.set(trimmed.slice(0, eq).trim(), trimmed.slice(eq + 1).trim());
+      }
+    }
+
+    const defaults: Record<string, string> = isBedrock
+      ? {
+          "server-name": String(scope.SERVER_NAME ?? "BlockHarbor Server"),
+          gamemode: "survival",
+          difficulty: "normal",
+          "allow-cheats": "true",
+          "max-players": "20",
+          "online-mode": "false",
+          "allow-list": "false",
+          "white-list": "false",
+          "server-port": String(scope.SERVER_PORT ?? 19132),
+          "view-distance": "10",
+          "tick-distance": "6",
+          "player-idle-timeout": "0",
+          "default-player-permission-level": "member",
+        }
+      : {
+          "server-port": String(scope.SERVER_PORT ?? 25565),
+          "query.port": String(scope.SERVER_PORT ?? 25565),
+          "enable-query": "true",
+          "enable-status": "true",
+          "online-mode": "false",
+          "enforce-secure-profile": "false",
+          "white-list": "false",
+          "enforce-whitelist": "false",
+          "pause-when-empty-seconds": "0",
+          "spawn-protection": "0",
+          "allow-flight": "true",
+          pvp: "true",
+          difficulty: "normal",
+          gamemode: "survival",
+          "force-gamemode": "false",
+          hardcore: "false",
+          "max-players": "20",
+          "view-distance": "10",
+          "simulation-distance": "10",
+          "generate-structures": "true",
+          "allow-nether": "true",
+          "spawn-animals": "true",
+          "spawn-monsters": "true",
+          "spawn-npcs": "true",
+          "enable-command-block": "true",
+          "op-permission-level": "4",
+          "function-permission-level": "2",
+          "prevent-proxy-connections": "false",
+          "use-native-transport": "true",
+          "network-compression-threshold": "256",
+          "rate-limit": "0",
+          "accepts-transfers": "true",
+          motd: `§f${String(scope.SERVER_NAME ?? "BlockHarbor Server")}`,
+        };
+
+    for (const [k, v] of Object.entries(defaults)) {
+      if (!map.has(k) || k === "online-mode" || k === "enforce-secure-profile" || k === "white-list" || k === "spawn-protection" || k === "pause-when-empty-seconds") {
+        map.set(k, v);
+      }
+    }
+
+    const out = Array.from(map.entries())
+      .map(([k, v]) => `${k}=${v}`)
+      .join("\n");
+    fs.writeFileSync(spPath, out + "\n", "utf-8");
   }
 }

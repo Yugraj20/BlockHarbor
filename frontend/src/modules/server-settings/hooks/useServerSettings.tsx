@@ -11,6 +11,7 @@ const MAIN_PROPERTIES = [
   "motd",
   "max-players",
   "online-mode",
+  "enforce-secure-profile",
   "white-list",
   "difficulty",
   "gamemode",
@@ -18,6 +19,7 @@ const MAIN_PROPERTIES = [
   "hardcore",
   "allow-flight",
   "spawn-protection",
+  "pause-when-empty-seconds",
   "level-seed",
   "view-distance",
   "simulation-distance",
@@ -30,6 +32,15 @@ const MAIN_PROPERTIES = [
   "server-port",
   "query.port",
 ];
+
+function stringifyProps(raw: Record<string, any>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(raw || {}).map(([k, v]) => [
+      k,
+      v !== undefined && v !== null ? String(v) : "",
+    ])
+  );
+}
 
 export const useServerSettings = () => {
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -49,11 +60,12 @@ export const useServerSettings = () => {
       setIsLoading(true);
       try {
         const response = await api.servers.getProperties(selectedServer.id);
-        setSettings(response);
+        const normalized = stringifyProps(response);
+        setSettings(normalized);
 
-        const otherProps = Object.entries(response)
+        const otherProps = Object.entries(normalized)
           .filter(([key]) => !MAIN_PROPERTIES.includes(key))
-          .map(([key, value]) => ({ key, value: value ? String(value) : "" }));
+          .map(([key, value]) => ({ key, value }));
 
         setOtherProperties(otherProps);
       } catch (error: any) {
@@ -155,11 +167,12 @@ export const useServerSettings = () => {
 
     try {
       const response = await api.servers.getProperties(selectedServer.id);
-      setSettings(response);
+      const normalized = stringifyProps(response);
+      setSettings(normalized);
 
-      const otherProps = Object.entries(response)
+      const otherProps = Object.entries(normalized)
         .filter(([key]) => !MAIN_PROPERTIES.includes(key))
-        .map(([key, value]) => ({ key, value: String(value) }));
+        .map(([key, value]) => ({ key, value }));
 
       setOtherProperties(otherProps);
       notify({ title: "Settings reset to saved values", type: "success" });

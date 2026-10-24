@@ -252,16 +252,19 @@ export function PlayitWizardModal({
   const handleSaveTunnel = async () => {
     setIsSavingTunnel(true);
     try {
-      await api.playit.createTunnel({
-        serverId: selectedServerId,
-        name: tunnelName,
-        protocol,
-        localIp: "127.0.0.1",
-        localPort,
-        publicAddress: publicAddress || null,
-        publicPort: publicPort ? Number(publicPort) : null,
-        tunnelType,
-      });
+      // Avoid creating a duplicate record if Step 7 auto-create already saved the tunnel
+      if (!autoCreateSuccess) {
+        await api.playit.createTunnel({
+          serverId: selectedServerId,
+          name: tunnelName,
+          protocol,
+          localIp: "127.0.0.1",
+          localPort,
+          publicAddress: publicAddress || null,
+          publicPort: publicPort ? Number(publicPort) : null,
+          tunnelType,
+        });
+      }
       onTunnelCreated();
       onOpenChange(false);
       setStep(1);

@@ -426,6 +426,8 @@ export class ServerInstance implements IInstance {
     this.completer = undefined;
     this.updateStatus(ServerStatus.STARTING);
 
+    await this.ensurePlayableRuntimeProperties();
+
     const kind = this.config.runtimeKind ?? "native";
     const scope = this.buildLaunchScope();
 
@@ -706,5 +708,83 @@ export class ServerInstance implements IInstance {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Before starting a Minecraft server, ensure eula.txt is accepted and repair
+   * default settings that block cracked clients or tunnel connections (such as
+   * enforce-secure-profile=true when online-mode=false, empty-server pausing,
+   * or auto-enabled white-list=true with an empty whitelist.json).
+   */
+  private async ensurePlayableRuntimeProperties(): Promise<void> {
+    if (this.blueprint && this.blueprint.game !== "minecraft") return;
+    const serverDir = getServerPath(this.serverId);
+
+    try {
+      const eulaPath = path.join(serverDir, "eula.txt");
+      await fs.writeFile(eulaPath, "eula=true\n", "utf-8");
+    } catch {}
+
+    try {
+      const props = await this.readServerProperties();
+      if (!props || typeof props !== "object") return;
+
+      let changed = false;
+      const isOffline =
+        props["online-mode"] === false || props["online-mode"] === "false";
+
+      if (isOffline) {
+        if (
+          props["enforce-secure-profile"] === undefined ||
+          props["enforce-secure-profile"] === true ||
+          props["enforce-secure-profile"] === "true"
+        ) {
+          props["enforce-secure-profile"] = "false";
+          changed = true;
+        }
+        if (
+          props["prevent-proxy-connections"] === true ||
+          props["prevent-proxy-connections"] === "true"
+        ) {
+          props["prevent-proxy-connections"] = "false";
+          changed = true;
+        }
+      }
+
+      // Prevent Minecraft 1.21.2+ / 26.3 from pausing after 60s of 0 players
+      if (
+        props["pause-when-empty-seconds"] === undefined ||
+        Number(props["pause-when-empty-seconds"]) === 60
+      ) {
+        props["pause-when-empty-seconds"] = "0";
+        changed = true;
+      }
+
+      // If white-list=true but whitelist.json is missing or empty ([]), disable white-list
+      // so Minecraft 26.3's auto-whitelist default doesn't lock out everyone
+      if (props["white-list"] === true || props["white-list"] === "true") {
+        let hasWhitelistedPlayers = false;
+        try {
+          const wlRaw = await fs.readFile(
+            path.join(serverDir, "whitelist.json"),
+            "utf-8",
+          );
+          const wlArr = JSON.parse(wlRaw);
+          if (Array.isArray(wlArr) && wlArr.length > 0) {
+            hasWhitelistedPlayers = true;
+          }
+        } catch {}
+
+        if (!hasWhitelistedPlayers) {
+          props["white-list"] = "false";
+          props["enforce-whitelist"] = "false";
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        await this.writeServerProperties(props);
+      }
+    } catch {}
   }
 }
